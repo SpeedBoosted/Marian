@@ -157,9 +157,11 @@
   <ItemGroup>
     <ClCompile Include="apkatest.cpp" />
     <ClCompile Include="klasy.cpp" />
+    <ClCompile Include="levels.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="klasy.h" />
+    <ClInclude Include="levels.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

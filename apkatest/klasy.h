@@ -6,27 +6,40 @@ class Platform {
 public:
     sf::RectangleShape shape;
     Platform(float x, float y, float width, float height);
+    void draw(sf::RenderWindow& window);
+};
+
+class Bullet {
+public:
+    sf::CircleShape shape;
+    sf::Vector2f velocity;
+    bool active;
+    bool fromEnemy;
+
+    Bullet(float x, float y, float vx, float vy, bool enemy);
+    void update();
+    void draw(sf::RenderWindow& window);
 };
 
 class Player {
 public:
     sf::RectangleShape shape;
-    sf::Vector2f velocity;
+    float yVelocity;
+    int hp;
     bool onGround;
 
     Player(float x, float y);
+    void move(float dx, const std::vector<Platform>& platforms);
     void update(const std::vector<Platform>& platforms);
-    void jump();
-    void move(float dx);
+    bool jump(const std::vector<Platform>& platforms);
+    Bullet shoot();
+    void draw(sf::RenderWindow& window);
 };
 
 class Enemy {
 public:
     sf::RectangleShape shape;
-    sf::Vector2f velocity;
-    float speed;
-    bool alive;
-
     Enemy(float x, float y);
-    void update(const std::vector<Platform>& platforms);
+    Bullet shootTowards(const Player& player);
+    void draw(sf::RenderWindow& window);
 };
