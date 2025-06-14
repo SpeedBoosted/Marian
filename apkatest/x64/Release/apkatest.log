@@ -1,0 +1,10 @@
+﻿  apkatest.cpp
+  klasy.cpp
+  levels.cpp
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(1,10): error C1083: Nie można otworzyć pliku dołącz: 'SFML/Graphics.hpp': No such file or directory
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.h(2,10): error C1083: Nie można otworzyć pliku dołącz: 'SFML/Graphics.hpp': No such file or directory
+  (kompilowanie pliku źródłowego „klasy.cpp”)
+  
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.h(2,10): error C1083: Nie można otworzyć pliku dołącz: 'SFML/Graphics.hpp': No such file or directory
+  (kompilowanie pliku źródłowego „levels.cpp”)
+  

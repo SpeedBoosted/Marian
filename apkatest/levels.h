@@ -1,13 +1,14 @@
 #pragma once
+  
+#include <vector>
 #include "klasy.h"
-
+ 
 struct LevelData {
     std::vector<Platform> platforms;
     std::vector<Enemy> enemies;
-    sf::Vector2f playerStart;
-    sf::Vector2f goalPos;
 };
 
+// Deklaracje funkcji tworz¹cych poziomy
 LevelData createLevel1();
 LevelData createLevel2();
 LevelData createLevel3();

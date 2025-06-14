@@ -1,162 +1,213 @@
 ﻿#include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "klasy.h"
-#include "levels.h"
-#include <vector>
-#include <iostream>
+
+using namespace sf;
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(1280, 720), "2D Platformer");
+    RenderWindow window({ 800,600 }, "Marian");
     window.setFramerateLimit(60);
 
-    sf::Font font;
+    // --- Audio ---
+    SoundBuffer jumpBuf, shootBuf, enemyShootBuf;
+    if (!jumpBuf.loadFromFile("jump.wav"))      return -1;
+    if (!shootBuf.loadFromFile("shoot.wav"))    return -1;
+    if (!enemyShootBuf.loadFromFile("shoot_2.wav")) return -1;
+
+    Sound jumpSound(jumpBuf), shootSound(shootBuf), enemyShootSound(enemyShootBuf);
+
+    // --- Fonty i teksty końcowe ---
+    Font font;
     font.loadFromFile("arial.ttf");
 
-    sf::Text menuText("Wybierz poziom:\n1. Poziom 1\n2. Poziom 2\n3. Poziom 3", font, 30);
-    menuText.setPosition(100, 100);
+    Text gameOverText("Game Over!\nPress any key...", font, 40);
+    gameOverText.setFillColor(Color::Red);
+    gameOverText.setPosition(200, 250);
 
-    sf::Text gameOverText("GAME OVER", font, 50);
-    gameOverText.setFillColor(sf::Color::Red);
-    gameOverText.setPosition(500, 300);
+    Text winText("You Win!\nPress any key...", font, 40);
+    winText.setFillColor(Color::Yellow);
+    winText.setPosition(200, 250);
 
-    sf::Text victoryText("META OSIAGNIECIE", font, 50);
-    victoryText.setFillColor(sf::Color::Green);
-    victoryText.setPosition(450, 300);
-
-    sf::RectangleShape hpBarBack(sf::Vector2f(200, 20));
-    hpBarBack.setFillColor(sf::Color::Red);
-    hpBarBack.setPosition(20, 20);
-
-    sf::RectangleShape hpBar(sf::Vector2f(200, 20));
-    hpBar.setFillColor(sf::Color::Green);
-    hpBar.setPosition(20, 20);
-
-    sf::SoundBuffer jumpBuffer, shootBuffer;
-    jumpBuffer.loadFromFile("jump.wav");
-    shootBuffer.loadFromFile("shoot.wav");
-
-    sf::Sound jumpSound(jumpBuffer);
-    sf::Sound shootSound(shootBuffer);
-
-    int currentLevel = 0;
-    bool inMenu = true;
-    bool gameOver = false;
-    bool levelCompleted = false;
-
-    Player* player = nullptr;
+    // --- Stan gry ---
+    Menu                menu;
+    Player              player;
     std::vector<Platform> platforms;
-    std::vector<Enemy> enemies;
-    std::vector<Bullet> bullets;
-    sf::RectangleShape goal(sf::Vector2f(40, 40));
-    goal.setFillColor(sf::Color::Cyan);
+    std::vector<Enemy>    enemies;
 
-    auto loadLevel = [&](int levelNumber) {
-        LevelData level;
-        switch (levelNumber) {
-        case 1: level = createLevel1(); break;
-        case 2: level = createLevel2(); break;
-        case 3: level = createLevel3(); break;
-        default: return;
+    bool isGameOver = false;
+    bool isWin = false;
+    int  currentLevel = 0;
+
+    // --- Lambda do wczytywania poziomów ---
+    auto loadLevel = [&](int lvl) {
+        platforms.clear();
+        enemies.clear();
+        switch (lvl) {
+        case 1:
+            player = Player(100, 500);
+            platforms = {
+                {0,550,800,50},
+                {200,450,120,20},
+                {400,350,120,20},
+                {600,250,120,20}
+            };
+            enemies = { {220,410} };
+            break;
+        case 2:
+            player = Player(50, 500);
+            platforms = {
+                {0,550,800,50},
+                {150,450,150,20},
+                {350,350,150,20},
+                {550,250,150,20},
+                {700,150,100,20}
+            };
+            enemies = { {180,410},{380,310} };
+            break;
+        case 3:
+            player = Player(20, 500);
+            platforms = {
+                {0,550,800,50},
+                {100,500,100,20},
+                {300,400,100,20},
+                {500,300,100,20},
+                {700,200,100,20}
+            };
+            enemies = { {120,460},{320,360},{520,260} };
+            break;
         }
-
-        if (player) delete player;
-        player = new Player(level.playerStart.x, level.playerStart.y);
-        platforms = level.platforms;
-        enemies = level.enemies;
-        bullets.clear();
-        goal.setPosition(level.goalPos);
-        gameOver = false;
-        levelCompleted = false;
+        isGameOver = isWin = false;
         };
 
+    // --- Główna pętla ---
     while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
+        Event ev;
+        while (window.pollEvent(ev)) {
+            if (ev.type == Event::Closed)
                 window.close();
 
-            if (inMenu && event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Num1) { currentLevel = 1; loadLevel(currentLevel); inMenu = false; }
-                else if (event.key.code == sf::Keyboard::Num2) { currentLevel = 2; loadLevel(currentLevel); inMenu = false; }
-                else if (event.key.code == sf::Keyboard::Num3) { currentLevel = 3; loadLevel(currentLevel); inMenu = false; }
-            }
-        }
-
-        window.clear(sf::Color::Black);
-
-        if (inMenu) {
-            window.draw(menuText);
-        }
-        else if (gameOver) {
-            window.draw(gameOverText);
-        }
-        else if (levelCompleted) {
-            window.draw(victoryText);
-        }
-        else {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-                player->move(-5, platforms);
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                player->move(5, platforms);
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-                if (player->jump(platforms)) jumpSound.play();
-            }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z)) {
-                bullets.push_back(player->shoot());
-                shootSound.play();
+            // Restart po Game Over / Win
+            if ((isGameOver || isWin) && ev.type == Event::KeyPressed) {
+                menu.inMenu = true;
+                currentLevel = 0;
+                isGameOver = isWin = false;
             }
 
-            player->update(platforms);
-
-            // Update enemies
-            for (auto& enemy : enemies) {
-                Bullet b = enemy.shootTowards(*player);
-                bullets.push_back(b);
-            }
-
-            // Update bullets
-            for (auto& b : bullets)
-                b.update();
-
-            // Kolizje
-            for (auto& b : bullets) {
-                if (!b.active) continue;
-                if (b.fromEnemy && player->shape.getGlobalBounds().intersects(b.shape.getGlobalBounds())) {
-                    player->hp -= 10;
-                    b.active = false;
+            // Skok (z obsługą dźwięku)
+            if (!menu.inMenu && !isGameOver && !isWin
+                && ev.type == Event::KeyPressed
+                && ev.key.code == Keyboard::Space)
+            {
+                if (player.onGround) {
+                    player.jump();
+                    jumpSound.play();
                 }
             }
 
-            if (player->hp <= 0) {
-                gameOver = true;
-                continue;
+            // Strzał gracza (myszką + dźwięk)
+            if (!menu.inMenu && !isGameOver && !isWin
+                && ev.type == Event::MouseButtonPressed
+                && ev.mouseButton.button == Mouse::Left)
+            {
+                Vector2f target = window.mapPixelToCoords(
+                    { ev.mouseButton.x, ev.mouseButton.y });
+                player.shoot(target);
+                shootSound.play();
+            }
+        }
+
+        // --- MENU ---
+        if (menu.inMenu) {
+            menu.handleInput();
+            window.clear(Color::Black);
+            menu.draw(window);
+            window.display();
+            continue;
+        }
+
+        // Wczytaj poziom raz
+        if (!menu.inMenu && currentLevel != menu.selectedLevel) {
+            loadLevel(menu.selectedLevel);
+            currentLevel = menu.selectedLevel;
+        }
+
+        // Sterowanie A/D
+        if (!isGameOver && !isWin) {
+            if (Keyboard::isKeyPressed(Keyboard::A)) player.move(-4.f);
+            if (Keyboard::isKeyPressed(Keyboard::D)) player.move(4.f);
+        }
+
+        // --- Update gry ---
+        if (!isGameOver && !isWin) {
+            player.update(platforms);
+
+            for (auto& e : enemies) {
+                // teraz przekazujemy referencję do enemyShootSound
+                e.update(platforms, player, enemyShootSound);
+
+                // kolizje pocisków gracza → wróg
+                for (auto& b : player.bullets) {
+                    if (b.active && b.shape.getGlobalBounds()
+                        .intersects(e.shape.getGlobalBounds()))
+                    {
+                        e.takeDamage(40);
+                        b.active = false;
+                    }
+                }
+
+                // kolizje pocisków wroga → gracz
+                for (auto& b : e.bullets) {
+                    if (b.active && b.shape.getGlobalBounds()
+                        .intersects(player.shape.getGlobalBounds()))
+                    {
+                        player.takeDamage(10);
+                        b.active = false;
+                    }
+                }
             }
 
-            if (player->shape.getGlobalBounds().intersects(goal.getGlobalBounds())) {
-                levelCompleted = true;
-                currentLevel++;
-                if (currentLevel > 3) inMenu = true;
-                else loadLevel(currentLevel);
-            }
+            // Game Over?
+            if (player.hp <= 0)
+                isGameOver = true;
 
-            // Rysowanie
-            for (auto& p : platforms)
-                p.draw(window);
+            // Przejście poziomu (prawa krawędź ekranu)
+            if (player.shape.getPosition().x +
+                player.shape.getSize().x >= 800.f)
+            {
+                if (menu.selectedLevel < 3) {
+                    menu.selectedLevel++;
+                    loadLevel(menu.selectedLevel);
+                    currentLevel = menu.selectedLevel;
+                }
+                else {
+                    isWin = true;
+                }
+            }
+        }
+
+        // --- Render ---
+        window.clear(Color::Cyan);
+
+        if (isGameOver) {
+            window.draw(gameOverText);
+        }
+        else if (isWin) {
+            window.draw(winText);
+        }
+        else {
+            window.draw(player.shape);
+            window.draw(player.hpBar);
+            for (auto& p : platforms) window.draw(p.shape);
+            for (auto& e : enemies)  window.draw(e.shape);
+            for (auto& b : player.bullets)
+                if (b.active) window.draw(b.shape);
             for (auto& e : enemies)
-                e.draw(window);
-            for (auto& b : bullets)
-                b.draw(window);
-            player->draw(window);
-            window.draw(goal);
-
-            hpBar.setSize(sf::Vector2f(2 * player->hp, 20));
-            window.draw(hpBarBack);
-            window.draw(hpBar);
+                for (auto& b : e.bullets)
+                    if (b.active) window.draw(b.shape);
         }
 
         window.display();
     }
 
-    if (player) delete player;
     return 0;
 }
