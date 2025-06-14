@@ -1,33 +1,45 @@
-﻿// klasy.cpp
-#include "klasy.h"
-#include <SFML/Graphics.hpp>  // potrzebne m.in. sf::Keyboard
+﻿#include "klasy.h"
+#include <SFML/Graphics.hpp>
 #include <cmath>
+#include <iostream>
+using namespace sf;
+using namespace std;
 
-// fizyka
+// physics
 static const float GRAVITY = 0.5f;
 static const float JUMP_SPEED = -10.f;
 
+// texture init
+Texture Platform::texture;
+Texture Player::runTexture;
+
 // --- Platform ---
-Platform::Platform(float x, float y, float width, float height) {
+Platform::Platform(float x, float y, float w, float h) {
+    if (texture.getSize().x == 0) {
+        if (!texture.loadFromFile("platform.png"))
+            cerr << "platform.png missing\n";
+        texture.setRepeated(true);
+    }
+    shape.setTexture(&texture);
+    shape.setSize(Vector2f(w, h));
     shape.setPosition(x, y);
-    shape.setSize({ width, height });
-    shape.setFillColor(sf::Color::Green);
+    shape.setTextureRect(
+        IntRect(0, 0, int(w), int(h))
+    );
 }
 
 // --- MovingPlatform ---
-MovingPlatform::MovingPlatform(
-    float x, float y, float w, float h,
-    const sf::Vector2f& vel, float travelDist)
-    : Platform(x, y, w, h), origin(x, y),
-    velocity(vel), travel(travelDist)
+MovingPlatform::MovingPlatform(float x, float y, float w, float h,
+    const Vector2f& vel, float t)
+    : Platform(x, y, w, h),
+    origin(x, y), velocity(vel), travel(t)
 {
 }
-
 void MovingPlatform::update() {
     shape.move(velocity);
-    sf::Vector2f offs = shape.getPosition() - origin;
-    if (std::abs(offs.x) > travel) velocity.x = -velocity.x;
-    if (std::abs(offs.y) > travel) velocity.y = -velocity.y;
+    Vector2f offs = shape.getPosition() - origin;
+    if (abs(offs.x) > travel) velocity.x = -velocity.x;
+    if (abs(offs.y) > travel) velocity.y = -velocity.y;
 }
 
 // --- Bullet ---
@@ -35,69 +47,91 @@ Bullet::Bullet(float x, float y, float vx, float vy)
     : velocity(vx, vy), active(true)
 {
     shape.setPosition(x, y);
-    shape.setSize({ 10.f, 5.f });
-    shape.setFillColor(sf::Color::Yellow);
+    shape.setSize(Vector2f(10.f, 5.f));
+    shape.setFillColor(Color::Yellow);
 }
-
 void Bullet::update() {
     if (active) shape.move(velocity);
 }
 
 // --- Player ---
 Player::Player(float x, float y)
-    : velocity(0.f, 0.f), onGround(false), hp(100)
+    : velocity(0, 0), onGround(false), hp(100)
 {
-    shape.setPosition(x, y);
-    shape.setSize({ 40.f,60.f });
-    shape.setFillColor(sf::Color::Red);
-    hpBar.setSize({ (float)hp,10.f });
-    hpBar.setFillColor(sf::Color::Green);
+    if (runTexture.getSize().x == 0) {
+        if (!runTexture.loadFromFile("player_run.png"))
+            cerr << "player_run.png missing\n";
+    }
+    shape.setTexture(&runTexture);
+    int fw = runTexture.getSize().x / frameCount;
+    int fh = runTexture.getSize().y;
+    shape.setSize(Vector2f((float)fw, (float)fh));
+    shape.setTextureRect(IntRect(0, 0, fw, fh));
+    shape.setOrigin(fw / 2.f, fh / 2.f);
+    shape.setPosition(x + fw / 2.f, y + fh / 2.f);
+
+    hpBar.setSize(Vector2f((float)hp, 10.f));
+    hpBar.setFillColor(Color::Green);
     hpBar.setPosition(x, y - 15.f);
 }
 
-void Player::update(const std::vector<Platform*>& platforms) {
-    velocity.y += GRAVITY;
-    shape.move(velocity);
-    hpBar.setPosition(shape.getPosition().x,
-        shape.getPosition().y - 15.f);
-    onGround = false;
-    auto b = shape.getGlobalBounds();
-    for (auto* p : platforms) {
-        auto pb = p->shape.getGlobalBounds();
-        if (b.intersects(pb) && velocity.y >= 0.f) {
-            shape.setPosition(b.left, pb.top - b.height);
-            velocity.y = 0.f;
-            onGround = true;
-        }
-    }
-    for (auto& bl : bullets) bl.update();
-}
-
-void Player::jump() {
-    if (onGround) {
-        velocity.y = JUMP_SPEED;
-        onGround = false;
-    }
-}
-
 void Player::move(float dx) {
+    velocity.x = dx;
     shape.move(dx, 0.f);
 }
+void Player::update(const vector<Platform*>& plats) {
+    // anim
+    if (velocity.x != 0.f) {
+        if (animClock.getElapsedTime().asSeconds() > timePerFrame) {
+            animClock.restart();
+            currentFrame = (currentFrame + 1) % frameCount;
+            int fw = runTexture.getSize().x / frameCount;
+            int fh = runTexture.getSize().y;
+            shape.setTextureRect(IntRect(currentFrame * fw, 0, fw, fh));
+        }
+        shape.setScale((velocity.x < 0 ? -1.f : 1.f), 1.f);
+    }
+    else {
+        shape.setScale(1.f, 1.f);
+        int fw = runTexture.getSize().x / frameCount;
+        int fh = runTexture.getSize().y;
+        shape.setTextureRect(IntRect(0, 0, fw, fh));
+    }
 
-void Player::takeDamage(int amount) {
-    hp -= amount; if (hp < 0) hp = 0;
-    hpBar.setSize({ (float)hp,10.f });
+    velocity.y += GRAVITY;
+    shape.move(0, velocity.y);
+    Vector2f pos = shape.getPosition();
+    hpBar.setPosition(pos.x - shape.getSize().x / 2.f,
+        pos.y - shape.getSize().y / 2.f - 15.f);
+
+    onGround = false;
+    auto gb = shape.getGlobalBounds();
+    for (auto* p : plats) {
+        auto pb = p->shape.getGlobalBounds();
+        if (gb.intersects(pb) && velocity.y >= 0) {
+            shape.setPosition(gb.left + gb.width / 2.f,
+                pb.top - gb.height / 2.f);
+            velocity.y = 0; onGround = true;
+            break;
+        }
+    }
+    for (auto& b : bullets) b.update();
+    velocity.x = 0.f;
 }
-
-void Player::shoot(const sf::Vector2f& target) {
-    sf::Vector2f pos = shape.getPosition();
-    pos.x += shape.getSize().x / 2.f;
-    pos.y += shape.getSize().y / 2.f;
-    float dx = target.x - pos.x, dy = target.y - pos.y;
-    float len = std::sqrt(dx * dx + dy * dy);
-    if (len <= 0.f) return;
-    dx /= len; dy /= len;
-    bullets.emplace_back(pos.x, pos.y, dx * 8.f, dy * 8.f);
+void Player::jump() {
+    if (onGround) { velocity.y = JUMP_SPEED; onGround = false; }
+}
+void Player::takeDamage(int amt) {
+    hp -= amt; if (hp < 0) hp = 0;
+    hpBar.setSize(Vector2f((float)hp, 10.f));
+}
+void Player::shoot(const Vector2f& tgt) {
+    Vector2f cen = shape.getPosition();
+    float dx = tgt.x - cen.x, dy = tgt.y - cen.y;
+    float len = sqrt(dx * dx + dy * dy);
+    if (len > 0) bullets.emplace_back(
+        cen.x, cen.y, dx / len * 8, dy / len * 8
+    );
 }
 
 // --- Enemy ---
@@ -105,21 +139,21 @@ Enemy::Enemy(float x, float y, Type t)
     : speed(2.f), alive(true), hp(100), type(t)
 {
     shape.setPosition(x, y);
-    shape.setSize({ 40.f,40.f });
-    shape.setFillColor(sf::Color(139, 69, 19));
+    shape.setSize(Vector2f(40.f, 40.f));
+    shape.setFillColor(Color(139, 69, 19));
 }
 
-void Enemy::update(const std::vector<Platform*>& platforms,
-    const Player& player,
-    sf::Sound& shootSound)
+void Enemy::update(const vector<Platform*>& plats,
+    const Player& pl,
+    Sound& snd)
 {
     if (!alive) return;
     bool onPlat = false; const Platform* base = nullptr;
     auto eB = shape.getGlobalBounds();
-    for (auto* p : platforms) {
+    for (auto* p : plats) {
         auto pB = p->shape.getGlobalBounds();
         float eBot = eB.top + eB.height;
-        if (std::abs(eBot - pB.top) < 5.f &&
+        if (abs(eBot - pB.top) < 5 &&
             eB.left + eB.width > pB.left + 2 &&
             eB.left < pB.left + pB.width - 2)
         {
@@ -128,76 +162,70 @@ void Enemy::update(const std::vector<Platform*>& platforms,
             break;
         }
     }
-
     if (onPlat) {
         auto pB = base->shape.getGlobalBounds();
-        float nextX = shape.getPosition().x + speed;
-        if (nextX < pB.left || nextX + eB.width > pB.left + pB.width)
-            speed = -speed;
-        else
-            shape.move(speed, 0.f);
+        float nx = shape.getPosition().x + speed;
+        if (nx<pB.left || nx + eB.width>pB.left + pB.width) speed = -speed;
+        else shape.move(speed, 0);
     }
-    else {
-        shape.move(0.f, GRAVITY);
-    }
+    else shape.move(0, GRAVITY);
 
-    for (auto& bl : bullets) bl.update();
+    for (auto& b : bullets) b.update();
     if (rand() % 120 == 0) {
-        if (type == PISTOL)      shootPistol(player);
-        else                    shootShotgun(player);
-        shootSound.play();
+        if (type == PISTOL) shootPistol(pl);
+        else             shootShotgun(pl);
+        snd.play();
     }
 }
 
-void Enemy::shootPistol(const Player& player) {
-    sf::Vector2f e = shape.getPosition();
-    e.x += shape.getSize().x / 2.f; e.y += shape.getSize().y / 2.f;
-    auto p = player.shape.getPosition();
+void Enemy::shootPistol(const Player& pl) {
+    Vector2f e = shape.getPosition() + shape.getSize() / 2.f;
+    auto p = pl.shape.getPosition();
     float dx = p.x - e.x, dy = p.y - e.y;
-    float len = std::sqrt(dx * dx + dy * dy);
-    if (len <= 0.f) return;
-    dx /= len; dy /= len;
-    bullets.emplace_back(e.x, e.y, dx * 5.f, dy * 5.f);
+    float len = sqrt(dx * dx + dy * dy);
+    if (len > 0) bullets.emplace_back(e.x, e.y, dx / len * 5, dy / len * 5);
 }
 
-void Enemy::shootShotgun(const Player& player) {
-    sf::Vector2f e = shape.getPosition();
-    e.x += shape.getSize().x / 2.f; e.y += shape.getSize().y / 2.f;
-    auto p = player.shape.getPosition();
-    float base = std::atan2(p.y - e.y, p.x - e.x);
-    const int pellets = 5; const float spr = 15.f * 3.14159f / 180.f, spd = 6.f;
-    for (int i = 0;i < pellets;++i) {
-        float ang = base + (i - pellets / 2) * spr;
-        bullets.emplace_back(e.x, e.y, std::cos(ang) * spd, std::sin(ang) * spd);
+void Enemy::shootShotgun(const Player& pl) {
+    Vector2f e = shape.getPosition() + shape.getSize() / 2.f;
+    auto p = pl.shape.getPosition();
+    float base = atan2(p.y - e.y, p.x - e.x);
+    const int pel = 5; const float spr = 15 * 3.14159f / 180, spd = 6;
+    for (int i = 0;i < pel;i++) {
+        float ang = base + (i - pel / 2) * spr;
+        bullets.emplace_back(e.x, e.y, cos(ang) * spd, sin(ang) * spd);
     }
 }
 
-void Enemy::takeDamage(int amount) {
-    hp -= amount; if (hp <= 0) { alive = false; hp = 0; }
+void Enemy::takeDamage(int amt) {
+    hp -= amt;
+    if (hp <= 0) { alive = false; hp = 0; }
 }
 
 // --- Menu ---
-Menu::Menu() : inMenu(true), selectedLevel(0) {
+Menu::Menu()
+    : inMenu(true), selectedLevel(0)
+{
     font.loadFromFile("arial.ttf");
-    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300.f, 200.f);
-    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300.f, 300.f);
-    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300.f, 400.f);
+    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 200);
+    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 300);
+    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 400);
 }
 
 void Menu::handleInput() {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num1)) {
+    if (Keyboard::isKeyPressed(Keyboard::Num1)) {
         selectedLevel = 1; inMenu = false;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num2)) {
+    if (Keyboard::isKeyPressed(Keyboard::Num2)) {
         selectedLevel = 2; inMenu = false;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Num3)) {
+    if (Keyboard::isKeyPressed(Keyboard::Num3)) {
         selectedLevel = 3; inMenu = false;
     }
 }
 
-void Menu::draw(sf::RenderWindow& window) {
-    window.draw(t1);
-    window.draw(t2);
-    window.draw(t3);
+void Menu::draw(RenderWindow& w) {
+    w.draw(t1);
+    w.draw(t2);
+    w.draw(t3);
 }

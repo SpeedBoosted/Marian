@@ -1,4 +1,3 @@
-// klasy.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -7,69 +6,78 @@
 class Platform {
 public:
     sf::RectangleShape shape;
-    Platform(float x, float y, float width, float height);
+    static sf::Texture texture;
+    Platform(float x, float y, float w, float h);
     virtual void update() {}
 };
 
 class MovingPlatform : public Platform {
 public:
     sf::Vector2f origin, velocity;
-    float        travel;
+    float travel;
     MovingPlatform(float x, float y, float w, float h,
-        const sf::Vector2f& vel, float travelDist);
+        const sf::Vector2f& vel, float t);
     void update() override;
 };
 
 class Bullet {
 public:
     sf::RectangleShape shape;
-    sf::Vector2f       velocity;
-    bool               active;
+    sf::Vector2f velocity;
+    bool active;
     Bullet(float x, float y, float vx, float vy);
     void update();
 };
 
 class Player {
 public:
-    sf::RectangleShape  shape, hpBar;
-    sf::Vector2f        velocity;
-    bool                onGround;
-    int                 hp;
+    sf::RectangleShape shape, hpBar;
+    sf::Vector2f velocity;
+    bool onGround;
+    int hp;
     std::vector<Bullet> bullets;
+
+    static sf::Texture runTexture;
+    int frameCount = 10;
+    float timePerFrame = 0.08f;
+    int currentFrame = 0;
+    sf::Clock animClock;
+
     Player(float x = 0.f, float y = 0.f);
-    void update(const std::vector<Platform*>& platforms);
+    void update(const std::vector<Platform*>& plats);
     void jump();
     void move(float dx);
-    void takeDamage(int amount);
-    void shoot(const sf::Vector2f& target);
+    void takeDamage(int amt);
+    void shoot(const sf::Vector2f& tgt);
 };
 
 class Enemy {
 public:
     enum Type { PISTOL, SHOTGUN };
-    sf::RectangleShape  shape;
-    float               speed;
-    bool                alive;
-    int                 hp;
-    Type                type;
+    sf::RectangleShape shape;
+    float speed;
+    bool alive;
+    int hp;
+    Type type;
     std::vector<Bullet> bullets;
+
     Enemy(float x = 0.f, float y = 0.f, Type t = PISTOL);
-    void update(const std::vector<Platform*>& platforms,
-        const Player& player,
-        sf::Sound& shootSound);
-    void takeDamage(int amount);
+    void update(const std::vector<Platform*>& plats,
+        const Player& pl,
+        sf::Sound& snd);
+    void takeDamage(int amt);
 private:
-    void shootPistol(const Player& player);
-    void shootShotgun(const Player& player);
+    void shootPistol(const Player& pl);
+    void shootShotgun(const Player& pl);
 };
 
 class Menu {
 public:
-    sf::Font  font;
-    sf::Text  t1, t2, t3;
-    bool      inMenu;
-    int       selectedLevel;
+    sf::Font font;
+    sf::Text t1, t2, t3;
+    bool inMenu;
+    int selectedLevel;
     Menu();
     void handleInput();
-    void draw(sf::RenderWindow& window);
+    void draw(sf::RenderWindow& w);
 };
