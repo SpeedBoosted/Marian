@@ -1,17 +1,35 @@
 ﻿#include "klasy.h"
 #include <cmath>
 
+// fizyka
 static const float GRAVITY = 0.5f;
 static const float JUMP_SPEED = -10.0f;
 
-// --- Platform ---
+//
+// Platform
+//
 Platform::Platform(float x, float y, float width, float height) {
     shape.setPosition(x, y);
     shape.setSize({ width,height });
     shape.setFillColor(sf::Color::Green);
 }
 
-// --- Bullet ---
+MovingPlatform::MovingPlatform(float x, float y, float w, float h,
+    const sf::Vector2f& vel, float travelDist)
+    : Platform(x, y, w, h), origin(x, y), velocity(vel), travel(travelDist)
+{
+}
+
+void MovingPlatform::update() {
+    shape.move(velocity);
+    sf::Vector2f offs = shape.getPosition() - origin;
+    if (std::abs(offs.x) > travel) velocity.x = -velocity.x;
+    if (std::abs(offs.y) > travel) velocity.y = -velocity.y;
+}
+
+//
+// Bullet
+//
 Bullet::Bullet(float x, float y, float vx, float vy) {
     shape.setPosition(x, y);
     shape.setSize({ 10,5 });
@@ -21,48 +39,47 @@ Bullet::Bullet(float x, float y, float vx, float vy) {
 }
 
 void Bullet::update() {
-    if (active)
-        shape.move(velocity);
+    if (active) shape.move(velocity);
 }
 
-// --- Player ---
-Player::Player(float x, float y) {
+//
+// Player
+//
+Player::Player(float x, float y)
+    : velocity(0, 0), onGround(false), hp(100)
+{
     shape.setPosition(x, y);
     shape.setSize({ 40,60 });
     shape.setFillColor(sf::Color::Red);
-    velocity = { 0,0 };
-    onGround = false;
-    hp = 100;
 
     hpBar.setSize({ (float)hp,10.f });
     hpBar.setFillColor(sf::Color::Green);
-    hpBar.setPosition(x, y - 15.f);
+    hpBar.setPosition(x, y - 15);
 }
 
-void Player::update(const std::vector<Platform>& platforms) {
-    // Grawitacja
+void Player::update(const std::vector<Platform*>& platforms) {
+    // grawitacja
     velocity.y += GRAVITY;
     shape.move(velocity);
 
-    // Pasek HP
+    // pasek HP
     hpBar.setPosition(shape.getPosition().x,
         shape.getPosition().y - 15.f);
 
-    // Lądowanie na platformach
+    // kolizje i lądowanie
     onGround = false;
     auto b = shape.getGlobalBounds();
-    for (auto& p : platforms) {
-        auto pb = p.shape.getGlobalBounds();
-        if (b.intersects(pb) && velocity.y >= 0.f) {
+    for (auto* p : platforms) {
+        p->update();
+        auto pb = p->shape.getGlobalBounds();
+        if (b.intersects(pb) && velocity.y >= 0) {
             shape.setPosition(b.left, pb.top - b.height);
-            velocity.y = 0.f;
+            velocity.y = 0;
             onGround = true;
         }
     }
-
-    // Update pocisków gracza
-    for (auto& bl : bullets)
-        bl.update();
+    // update pocisków
+    for (auto& bl : bullets) bl.update();
 }
 
 void Player::jump() {
@@ -73,7 +90,7 @@ void Player::jump() {
 }
 
 void Player::move(float dx) {
-    shape.move(dx, 0.f);
+    shape.move(dx, 0);
 }
 
 void Player::takeDamage(int amount) {
@@ -83,108 +100,109 @@ void Player::takeDamage(int amount) {
 }
 
 void Player::shoot(const sf::Vector2f& target) {
-    auto pos = shape.getPosition();
+    sf::Vector2f pos = shape.getPosition();
     pos.x += shape.getSize().x / 2;
     pos.y += shape.getSize().y / 2;
-
     float dx = target.x - pos.x;
     float dy = target.y - pos.y;
     float len = std::sqrt(dx * dx + dy * dy);
-    if (len <= 0.f) return;
+    if (len <= 0) return;
     dx /= len; dy /= len;
-
     bullets.emplace_back(pos.x, pos.y, dx * 8.f, dy * 8.f);
 }
 
-// --- Enemy ---
-Enemy::Enemy(float x, float y) {
+//
+// Enemy
+//
+Enemy::Enemy(float x, float y, Type t)
+    : speed(2.f), alive(true), hp(100), type(t)
+{
     shape.setPosition(x, y);
     shape.setSize({ 40,40 });
     shape.setFillColor({ 139,69,19 });
-    speed = 2.f;
-    alive = true;
-    hp = 100;
 }
 
-void Enemy::update(const std::vector<Platform>& platforms,
+void Enemy::update(const std::vector<Platform*>& platforms,
     const Player& player,
-    sf::Sound& enemyShootSound)
+    sf::Sound& shootSound)
 {
     if (!alive) return;
 
-    // Wykrycie platformy
+    // jak Player, poruszanie po platformie
     bool onPlat = false;
     const Platform* pl = nullptr;
     auto eB = shape.getGlobalBounds();
-    for (auto& p : platforms) {
-        auto pB = p.shape.getGlobalBounds();
+    for (auto* p : platforms) {
+        auto pB = p->shape.getGlobalBounds();
         float eBot = eB.top + eB.height;
         if (std::abs(eBot - pB.top) < 5.f &&
             eB.left + eB.width > pB.left + 2 &&
             eB.left < pB.left + pB.width - 2)
         {
-            onPlat = true;
-            pl = &p;
+            onPlat = true; pl = p;
             shape.setPosition(eB.left, pB.top - eB.height);
             break;
         }
     }
-
     if (onPlat) {
-        // Ruch w bok i odbijanie od krawędzi
-        shape.move(speed, 0.f);
+        shape.move(speed, 0);
         auto pB = pl->shape.getGlobalBounds();
         eB = shape.getGlobalBounds();
         if (eB.left <= pB.left || eB.left + eB.width >= pB.left + pB.width)
             speed = -speed;
     }
     else {
-        // Spadanie
-        shape.move(0.f, GRAVITY);
+        shape.move(0, GRAVITY);
     }
 
-    // Update pocisków przeciwnika
-    for (auto& bl : bullets)
-        bl.update();
+    for (auto& bl : bullets) bl.update();
 
-    // Strzał co ~120 klatek
     if (rand() % 120 == 0) {
-        shoot(player);
-        enemyShootSound.play();
+        if (type == PISTOL)      shootPistol(player);
+        else /*SHOTGUN*/        shootShotgun(player);
+        shootSound.play();
     }
 }
 
-void Enemy::shoot(const Player& player) {
-    auto ePos = shape.getPosition();
-    ePos.x += shape.getSize().x / 2;
-    ePos.y += shape.getSize().y / 2;
-
-    auto pPos = player.shape.getPosition();
-    float dx = pPos.x - ePos.x;
-    float dy = pPos.y - ePos.y;
+void Enemy::shootPistol(const Player& player) {
+    sf::Vector2f e = shape.getPosition();
+    e.x += shape.getSize().x / 2;
+    e.y += shape.getSize().y / 2;
+    auto p = player.shape.getPosition();
+    float dx = p.x - e.x, dy = p.y - e.y;
     float len = std::sqrt(dx * dx + dy * dy);
-    if (len <= 0.f) return;
+    if (len <= 0) return;
     dx /= len; dy /= len;
+    bullets.emplace_back(e.x, e.y, dx * 5.f, dy * 5.f);
+}
 
-    bullets.emplace_back(ePos.x, ePos.y, dx * 5.f, dy * 5.f);
+void Enemy::shootShotgun(const Player& player) {
+    sf::Vector2f e = shape.getPosition();
+    e.x += shape.getSize().x / 2;
+    e.y += shape.getSize().y / 2;
+    auto p = player.shape.getPosition();
+    float base = std::atan2(p.y - e.y, p.x - e.x);
+    const int pellets = 5;
+    const float spr = 15.f * 3.14159f / 180.f, spd = 6.f;
+    for (int i = 0; i < pellets; ++i) {
+        float ang = base + (i - pellets / 2) * spr;
+        bullets.emplace_back(e.x, e.y, std::cos(ang) * spd, std::sin(ang) * spd);
+    }
 }
 
 void Enemy::takeDamage(int amount) {
     hp -= amount;
-    if (hp <= 0) {
-        alive = false;
-        hp = 0;
-    }
+    if (hp <= 0) { alive = false; hp = 0; }
 }
 
-// --- Menu ---
-Menu::Menu() {
+//
+// Menu
+//
+Menu::Menu() : inMenu(true), selectedLevel(0) {
     font.loadFromFile("arial.ttf");
     t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 200);
     t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 300);
     t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 400);
-    inMenu = true;
-    selectedLevel = 0;
 }
 
 void Menu::handleInput() {

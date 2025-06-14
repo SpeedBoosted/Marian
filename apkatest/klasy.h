@@ -7,6 +7,16 @@ class Platform {
 public:
     sf::RectangleShape shape;
     Platform(float x, float y, float width, float height);
+    virtual void update() {}
+};
+
+class MovingPlatform : public Platform {
+public:
+    sf::Vector2f origin, velocity;
+    float travel;
+    MovingPlatform(float x, float y, float w, float h,
+        const sf::Vector2f& vel, float travelDist);
+    void update() override;
 };
 
 class Bullet {
@@ -29,7 +39,7 @@ public:
     std::vector<Bullet> bullets;
 
     Player(float x = 0, float y = 0);
-    void update(const std::vector<Platform>& platforms);
+    void update(const std::vector<Platform*>& platforms);
     void jump();
     void move(float dx);
     void takeDamage(int amount);
@@ -38,19 +48,24 @@ public:
 
 class Enemy {
 public:
+    enum Type { PISTOL, SHOTGUN };
+
     sf::RectangleShape  shape;
     float               speed;
     bool                alive;
     int                 hp;
+    Type                type;
     std::vector<Bullet> bullets;
 
-    Enemy(float x = 0, float y = 0);
-    // Teraz update przyjmuje referencjê do Sound
-    void update(const std::vector<Platform>& platforms,
+    Enemy(float x = 0, float y = 0, Type t = PISTOL);
+    void update(const std::vector<Platform*>& platforms,
         const Player& player,
-        sf::Sound& enemyShootSound);
-    void shoot(const Player& player);
+        sf::Sound& shootSound);
     void takeDamage(int amount);
+
+private:
+    void shootPistol(const Player& player);
+    void shootShotgun(const Player& player);
 };
 
 class Menu {
