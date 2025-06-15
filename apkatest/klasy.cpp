@@ -1,19 +1,18 @@
-﻿#include "klasy.h"
+﻿// klasy.cpp
+#include "klasy.h"
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <cmath>
 #include <iostream>
+
 using namespace sf;
 using namespace std;
 
-// physics
 static const float GRAVITY = 0.5f;
 static const float JUMP_SPEED = -10.f;
 
-// texture init
-Texture Platform::texture;
-Texture Player::runTexture;
-
 // --- Platform ---
+Texture Platform::texture;
 Platform::Platform(float x, float y, float w, float h) {
     if (texture.getSize().x == 0) {
         if (!texture.loadFromFile("platform.png"))
@@ -23,16 +22,13 @@ Platform::Platform(float x, float y, float w, float h) {
     shape.setTexture(&texture);
     shape.setSize(Vector2f(w, h));
     shape.setPosition(x, y);
-    shape.setTextureRect(
-        IntRect(0, 0, int(w), int(h))
-    );
+    shape.setTextureRect(IntRect(0, 0, int(w), int(h)));
 }
 
 // --- MovingPlatform ---
 MovingPlatform::MovingPlatform(float x, float y, float w, float h,
     const Vector2f& vel, float t)
-    : Platform(x, y, w, h),
-    origin(x, y), velocity(vel), travel(t)
+    : Platform(x, y, w, h), origin(x, y), velocity(vel), travel(t)
 {
 }
 void MovingPlatform::update() {
@@ -50,11 +46,10 @@ Bullet::Bullet(float x, float y, float vx, float vy)
     shape.setSize(Vector2f(10.f, 5.f));
     shape.setFillColor(Color::Yellow);
 }
-void Bullet::update() {
-    if (active) shape.move(velocity);
-}
+void Bullet::update() { if (active) shape.move(velocity); }
 
 // --- Player ---
+Texture Player::runTexture;
 Player::Player(float x, float y)
     : velocity(0, 0), onGround(false), hp(100)
 {
@@ -79,8 +74,9 @@ void Player::move(float dx) {
     velocity.x = dx;
     shape.move(dx, 0.f);
 }
+
 void Player::update(const vector<Platform*>& plats) {
-    // anim
+    // animacja
     if (velocity.x != 0.f) {
         if (animClock.getElapsedTime().asSeconds() > timePerFrame) {
             animClock.restart();
@@ -98,11 +94,14 @@ void Player::update(const vector<Platform*>& plats) {
         shape.setTextureRect(IntRect(0, 0, fw, fh));
     }
 
+    // grawitacja
     velocity.y += GRAVITY;
     shape.move(0, velocity.y);
-    Vector2f pos = shape.getPosition();
-    hpBar.setPosition(pos.x - shape.getSize().x / 2.f,
-        pos.y - shape.getSize().y / 2.f - 15.f);
+
+    // pasek HP
+    Vector2f p = shape.getPosition();
+    hpBar.setPosition(p.x - shape.getSize().x / 2.f,
+        p.y - shape.getSize().y / 2.f - 15.f);
 
     onGround = false;
     auto gb = shape.getGlobalBounds();
@@ -115,23 +114,25 @@ void Player::update(const vector<Platform*>& plats) {
             break;
         }
     }
+
     for (auto& b : bullets) b.update();
     velocity.x = 0.f;
 }
+
 void Player::jump() {
     if (onGround) { velocity.y = JUMP_SPEED; onGround = false; }
 }
+
 void Player::takeDamage(int amt) {
     hp -= amt; if (hp < 0) hp = 0;
     hpBar.setSize(Vector2f((float)hp, 10.f));
 }
+
 void Player::shoot(const Vector2f& tgt) {
-    Vector2f cen = shape.getPosition();
-    float dx = tgt.x - cen.x, dy = tgt.y - cen.y;
+    Vector2f c = shape.getPosition();
+    float dx = tgt.x - c.x, dy = tgt.y - c.y;
     float len = sqrt(dx * dx + dy * dy);
-    if (len > 0) bullets.emplace_back(
-        cen.x, cen.y, dx / len * 8, dy / len * 8
-    );
+    if (len > 0) bullets.emplace_back(c.x, c.y, dx / len * 8, dy / len * 8);
 }
 
 // --- Enemy ---
@@ -173,7 +174,7 @@ void Enemy::update(const vector<Platform*>& plats,
     for (auto& b : bullets) b.update();
     if (rand() % 120 == 0) {
         if (type == PISTOL) shootPistol(pl);
-        else             shootShotgun(pl);
+        else               shootShotgun(pl);
         snd.play();
     }
 }
@@ -191,7 +192,7 @@ void Enemy::shootShotgun(const Player& pl) {
     auto p = pl.shape.getPosition();
     float base = atan2(p.y - e.y, p.x - e.x);
     const int pel = 5; const float spr = 15 * 3.14159f / 180, spd = 6;
-    for (int i = 0;i < pel;i++) {
+    for (int i = 0; i < pel; i++) {
         float ang = base + (i - pel / 2) * spr;
         bullets.emplace_back(e.x, e.y, cos(ang) * spd, sin(ang) * spd);
     }
@@ -203,28 +204,30 @@ void Enemy::takeDamage(int amt) {
 }
 
 // --- Menu ---
-Menu::Menu()
-    : inMenu(true), selectedLevel(0)
-{
+Menu::Menu() : inMenu(true), selectedLevel(0) {
     font.loadFromFile("arial.ttf");
     t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 200);
     t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 300);
     t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 400);
+
+    if (!bgTexture.loadFromFile("tlo_menu.png"))
+        std::cerr << "Nie znaleziono tlo_menu.png\n";
+    bgSprite.setTexture(bgTexture);
 }
 
 void Menu::handleInput() {
-    if (Keyboard::isKeyPressed(Keyboard::Num1)) {
-        selectedLevel = 1; inMenu = false;
-    }
-    if (Keyboard::isKeyPressed(Keyboard::Num2)) {
-        selectedLevel = 2; inMenu = false;
-    }
-    if (Keyboard::isKeyPressed(Keyboard::Num3)) {
-        selectedLevel = 3; inMenu = false;
-    }
+    if (Keyboard::isKeyPressed(Keyboard::Num1)) { selectedLevel = 1; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num2)) { selectedLevel = 2; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num3)) { selectedLevel = 3; inMenu = false; }
 }
 
-void Menu::draw(RenderWindow& w) {
+void Menu::draw(sf::RenderWindow& w) {
+    Vector2u ws = w.getSize();
+    float sx = float(ws.x) / bgTexture.getSize().x;
+    float sy = float(ws.y) / bgTexture.getSize().y;
+    bgSprite.setScale(sx, sy);
+
+    w.draw(bgSprite);
     w.draw(t1);
     w.draw(t2);
     w.draw(t3);

@@ -1,3 +1,4 @@
+// klasy.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -49,6 +50,18 @@ public:
     void move(float dx);
     void takeDamage(int amt);
     void shoot(const sf::Vector2f& tgt);
+
+    // hitbox: 50% szer., 40% wys. orygina³u
+    sf::FloatRect getCollisionBounds() const {
+        auto b = shape.getGlobalBounds();
+        float shrinkX = b.width * 0.5f;
+        float shrinkY = b.height * 0.4f;
+        b.left += shrinkX / 2.f;
+        b.top += shrinkY / 2.f;
+        b.width -= shrinkX;
+        b.height -= shrinkY;
+        return b;
+    }
 };
 
 class Enemy {
@@ -77,6 +90,10 @@ public:
     sf::Text t1, t2, t3;
     bool inMenu;
     int selectedLevel;
+
+    sf::Texture bgTexture;
+    sf::Sprite  bgSprite;
+
     Menu();
     void handleInput();
     void draw(sf::RenderWindow& w);
