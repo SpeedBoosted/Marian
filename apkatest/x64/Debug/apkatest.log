@@ -1,8 +1,2 @@
-﻿  apkatest.cpp
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(86,69): warning C4244: "argument": konwersja z "int" do "float", możliwa utrata danych
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(86,54): warning C4244: "argument": konwersja z "int" do "float", możliwa utrata danych
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(88,40): warning C4244: "argument": konwersja z "int" do "float", możliwa utrata danych
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(88,25): warning C4244: "argument": konwersja z "int" do "float", możliwa utrata danych
-  klasy.cpp
-  Generowanie kodu...
+﻿  klasy.cpp
   apkatest.vcxproj -> C:\Users\mikus\Desktop\projekt_oficial\Marian\x64\Debug\apkatest.exe

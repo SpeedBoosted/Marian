@@ -8,11 +8,13 @@
 using namespace sf;
 using namespace std;
 
+// fizyka
 static const float GRAVITY = 0.5f;
 static const float JUMP_SPEED = -10.f;
 
 // --- Platform ---
 Texture Platform::texture;
+
 Platform::Platform(float x, float y, float w, float h) {
     if (texture.getSize().x == 0) {
         if (!texture.loadFromFile("platform.png"))
@@ -28,9 +30,13 @@ Platform::Platform(float x, float y, float w, float h) {
 // --- MovingPlatform ---
 MovingPlatform::MovingPlatform(float x, float y, float w, float h,
     const Vector2f& vel, float t)
-    : Platform(x, y, w, h), origin(x, y), velocity(vel), travel(t)
+    : Platform(x, y, w, h),
+    origin(x, y),
+    velocity(vel),
+    travel(t)
 {
 }
+
 void MovingPlatform::update() {
     shape.move(velocity);
     Vector2f offs = shape.getPosition() - origin;
@@ -46,12 +52,19 @@ Bullet::Bullet(float x, float y, float vx, float vy)
     shape.setSize(Vector2f(10.f, 5.f));
     shape.setFillColor(Color::Yellow);
 }
-void Bullet::update() { if (active) shape.move(velocity); }
+
+void Bullet::update() {
+    if (active)
+        shape.move(velocity);
+}
 
 // --- Player ---
 Texture Player::runTexture;
+
 Player::Player(float x, float y)
-    : velocity(0, 0), onGround(false), hp(100)
+    : velocity(0.f, 0.f),
+    onGround(false),
+    hp(100)
 {
     if (runTexture.getSize().x == 0) {
         if (!runTexture.loadFromFile("player_run.png"))
@@ -76,7 +89,7 @@ void Player::move(float dx) {
 }
 
 void Player::update(const vector<Platform*>& plats) {
-    // animacja
+    // animacja biegu
     if (velocity.x != 0.f) {
         if (animClock.getElapsedTime().asSeconds() > timePerFrame) {
             animClock.restart();
@@ -96,48 +109,62 @@ void Player::update(const vector<Platform*>& plats) {
 
     // grawitacja
     velocity.y += GRAVITY;
-    shape.move(0, velocity.y);
+    shape.move(0.f, velocity.y);
 
-    // pasek HP
-    Vector2f p = shape.getPosition();
-    hpBar.setPosition(p.x - shape.getSize().x / 2.f,
-        p.y - shape.getSize().y / 2.f - 15.f);
+    // aktualizacja paska HP
+    Vector2f pos = shape.getPosition();
+    hpBar.setPosition(pos.x - shape.getSize().x / 2.f,
+        pos.y - shape.getSize().y / 2.f - 15.f);
 
+    // kolizje z platformami
     onGround = false;
-    auto gb = shape.getGlobalBounds();
+    FloatRect gb = shape.getGlobalBounds();
     for (auto* p : plats) {
-        auto pb = p->shape.getGlobalBounds();
-        if (gb.intersects(pb) && velocity.y >= 0) {
+        FloatRect pb = p->shape.getGlobalBounds();
+        if (gb.intersects(pb) && velocity.y >= 0.f) {
             shape.setPosition(gb.left + gb.width / 2.f,
                 pb.top - gb.height / 2.f);
-            velocity.y = 0; onGround = true;
+            velocity.y = 0.f;
+            onGround = true;
             break;
         }
     }
 
-    for (auto& b : bullets) b.update();
+    // aktualizacja pocisków
+    for (auto& b : bullets)
+        b.update();
+
     velocity.x = 0.f;
 }
 
 void Player::jump() {
-    if (onGround) { velocity.y = JUMP_SPEED; onGround = false; }
+    if (onGround) {
+        velocity.y = JUMP_SPEED;
+        onGround = false;
+    }
 }
 
 void Player::takeDamage(int amt) {
-    hp -= amt; if (hp < 0) hp = 0;
+    hp -= amt;
+    if (hp < 0) hp = 0;
     hpBar.setSize(Vector2f((float)hp, 10.f));
 }
 
 void Player::shoot(const Vector2f& tgt) {
     Vector2f c = shape.getPosition();
-    float dx = tgt.x - c.x, dy = tgt.y - c.y;
+    float dx = tgt.x - c.x;
+    float dy = tgt.y - c.y;
     float len = sqrt(dx * dx + dy * dy);
-    if (len > 0) bullets.emplace_back(c.x, c.y, dx / len * 8, dy / len * 8);
+    if (len > 0.f)
+        bullets.emplace_back(c.x, c.y, dx / len * 8.f, dy / len * 8.f);
 }
 
 // --- Enemy ---
 Enemy::Enemy(float x, float y, Type t)
-    : speed(2.f), alive(true), hp(100), type(t)
+    : speed(2.f),
+    alive(true),
+    hp(100),
+    type(t)
 {
     shape.setPosition(x, y);
     shape.setSize(Vector2f(40.f, 40.f));
@@ -149,79 +176,113 @@ void Enemy::update(const vector<Platform*>& plats,
     Sound& snd)
 {
     if (!alive) return;
-    bool onPlat = false; const Platform* base = nullptr;
-    auto eB = shape.getGlobalBounds();
+
+    // poruszanie się po platformie
+    bool onPlat = false;
+    const Platform* base = nullptr;
+    FloatRect eB = shape.getGlobalBounds();
     for (auto* p : plats) {
-        auto pB = p->shape.getGlobalBounds();
+        FloatRect pB = p->shape.getGlobalBounds();
         float eBot = eB.top + eB.height;
-        if (abs(eBot - pB.top) < 5 &&
-            eB.left + eB.width > pB.left + 2 &&
-            eB.left < pB.left + pB.width - 2)
+        if (abs(eBot - pB.top) < 5.f &&
+            eB.left + eB.width > pB.left + 2.f &&
+            eB.left < pB.left + pB.width - 2.f)
         {
-            onPlat = true; base = p;
+            onPlat = true;
+            base = p;
             shape.setPosition(eB.left, pB.top - eB.height);
             break;
         }
     }
-    if (onPlat) {
-        auto pB = base->shape.getGlobalBounds();
-        float nx = shape.getPosition().x + speed;
-        if (nx<pB.left || nx + eB.width>pB.left + pB.width) speed = -speed;
-        else shape.move(speed, 0);
-    }
-    else shape.move(0, GRAVITY);
 
-    for (auto& b : bullets) b.update();
+    if (onPlat) {
+        FloatRect pB = base->shape.getGlobalBounds();
+        float nx = shape.getPosition().x + speed;
+        if (nx < pB.left || nx + eB.width > pB.left + pB.width)
+            speed = -speed;
+        else
+            shape.move(speed, 0.f);
+    }
+    else {
+        shape.move(0.f, GRAVITY);
+    }
+
+    // aktualizacja pocisków wroga
+    for (auto& b : bullets)
+        b.update();
+
+    // strzelanie co losową ilość klatek
     if (rand() % 120 == 0) {
-        if (type == PISTOL) shootPistol(pl);
-        else               shootShotgun(pl);
+        if (type == PISTOL)
+            shootPistol(pl);
+        else
+            shootShotgun(pl);
         snd.play();
     }
 }
 
 void Enemy::shootPistol(const Player& pl) {
     Vector2f e = shape.getPosition() + shape.getSize() / 2.f;
-    auto p = pl.shape.getPosition();
-    float dx = p.x - e.x, dy = p.y - e.y;
+    Vector2f p = pl.shape.getPosition();
+    float dx = p.x - e.x;
+    float dy = p.y - e.y;
     float len = sqrt(dx * dx + dy * dy);
-    if (len > 0) bullets.emplace_back(e.x, e.y, dx / len * 5, dy / len * 5);
+    if (len > 0.f)
+        bullets.emplace_back(e.x, e.y, dx / len * 5.f, dy / len * 5.f);
 }
 
 void Enemy::shootShotgun(const Player& pl) {
     Vector2f e = shape.getPosition() + shape.getSize() / 2.f;
-    auto p = pl.shape.getPosition();
+    Vector2f p = pl.shape.getPosition();
     float base = atan2(p.y - e.y, p.x - e.x);
-    const int pel = 5; const float spr = 15 * 3.14159f / 180, spd = 6;
-    for (int i = 0; i < pel; i++) {
-        float ang = base + (i - pel / 2) * spr;
-        bullets.emplace_back(e.x, e.y, cos(ang) * spd, sin(ang) * spd);
+    const int pellets = 5;
+    const float spread = 15.f * 3.14159f / 180.f;
+    const float speed = 6.f;
+    for (int i = 0; i < pellets; i++) {
+        float ang = base + (i - pellets / 2) * spread;
+        bullets.emplace_back(e.x, e.y, cos(ang) * speed, sin(ang) * speed);
     }
 }
 
 void Enemy::takeDamage(int amt) {
     hp -= amt;
-    if (hp <= 0) { alive = false; hp = 0; }
+    if (hp <= 0) {
+        alive = false;
+        hp = 0;
+    }
 }
 
 // --- Menu ---
-Menu::Menu() : inMenu(true), selectedLevel(0) {
-    font.loadFromFile("arial.ttf");
+Menu::Menu()
+    : inMenu(true),
+    selectedLevel(0)
+{
+    if (!font.loadFromFile("flame.otf"))
+        cerr << "flame.otf missing\n";
+
     t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 200);
     t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 300);
     t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 400);
 
     if (!bgTexture.loadFromFile("tlo_menu.png"))
-        std::cerr << "Nie znaleziono tlo_menu.png\n";
+        cerr << "tlo_menu.png missing\n";
     bgSprite.setTexture(bgTexture);
 }
 
 void Menu::handleInput() {
-    if (Keyboard::isKeyPressed(Keyboard::Num1)) { selectedLevel = 1; inMenu = false; }
-    if (Keyboard::isKeyPressed(Keyboard::Num2)) { selectedLevel = 2; inMenu = false; }
-    if (Keyboard::isKeyPressed(Keyboard::Num3)) { selectedLevel = 3; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num1)) {
+        selectedLevel = 1; inMenu = false;
+    }
+    if (Keyboard::isKeyPressed(Keyboard::Num2)) {
+        selectedLevel = 2; inMenu = false;
+    }
+    if (Keyboard::isKeyPressed(Keyboard::Num3)) {
+        selectedLevel = 3; inMenu = false;
+    }
 }
 
 void Menu::draw(sf::RenderWindow& w) {
+    // dopasowanie tła do rozmiaru okna
     Vector2u ws = w.getSize();
     float sx = float(ws.x) / bgTexture.getSize().x;
     float sy = float(ws.y) / bgTexture.getSize().y;

@@ -51,11 +51,11 @@ public:
     void takeDamage(int amt);
     void shoot(const sf::Vector2f& tgt);
 
-    // hitbox: 50% szer., 40% wys. orygina³u
+    // nowy, mocno pomniejszony hitbox
     sf::FloatRect getCollisionBounds() const {
         auto b = shape.getGlobalBounds();
-        float shrinkX = b.width * 0.5f;
-        float shrinkY = b.height * 0.4f;
+        float shrinkX = b.width * 0.7f;  // 70% szerokoœci
+        float shrinkY = b.height * 0.6f;  // 60% wysokoœci
         b.left += shrinkX / 2.f;
         b.top += shrinkY / 2.f;
         b.width -= shrinkX;
