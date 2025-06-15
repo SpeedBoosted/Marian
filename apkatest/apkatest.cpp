@@ -1,13 +1,13 @@
 ﻿// main.cpp
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+#include <algorithm>        // std::clamp
 #include "klasy.h"
 #include <vector>
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
 #include <iostream>
-#include <algorithm>
 
 using namespace sf;
 using std::vector;
@@ -21,12 +21,11 @@ int main()
     // główny widok kamery
     View view(Vector2f(400.f, 300.f), Vector2f(800.f, 600.f));
 
-    // ---- Tło rozciągnięte na cały ekran ----
+    // tło gry rozciągnięte na cały ekran
     Texture bgTex;
     if (!bgTex.loadFromFile("background.png"))
         std::cerr << "background.png missing\n";
     Sprite bgFull(bgTex);
-    // dobierz skalę, by dokładnie wypełnić 800×600
     bgFull.setScale(
         float(window.getSize().x) / bgTex.getSize().x,
         float(window.getSize().y) / bgTex.getSize().y
@@ -41,47 +40,62 @@ int main()
     shb.loadFromFile("shotgun.wav");
     Sound jumpSound(jb), shootSound(sb), pistolSound(pb), shotgunSound(shb);
 
-    // fallback-owy Game Over (tekst)
+    // font fallback
     Font font;
     if (!font.loadFromFile("arial.ttf"))
         std::cerr << "arial.ttf missing\n";
+
+    // tekst Game Over (fallback)
     Text gameOverText("Game Over!\nPress any key...", font, 40);
     gameOverText.setFillColor(Color::Red);
     {
-        FloatRect tb = gameOverText.getLocalBounds();
-        gameOverText.setOrigin(tb.width / 2.f, tb.height / 2.f);
+        FloatRect r = gameOverText.getLocalBounds();
+        gameOverText.setOrigin(r.width / 2.f, r.height / 2.f);
         gameOverText.setPosition(400.f, 300.f);
     }
 
-    // ekran You Win
-    Text youWin("You Win!\nPress any key...", font, 40);
-    youWin.setFillColor(Color::Yellow);
+    // tekst You Win (fallback)
+    Text youWinText("You Win!\nPress any key...", font, 40);
+    youWinText.setFillColor(Color::Yellow);
     {
-        FloatRect wb = youWin.getLocalBounds();
-        youWin.setOrigin(wb.width / 2.f, wb.height / 2.f);
-        youWin.setPosition(400.f, 300.f);
+        FloatRect r = youWinText.getLocalBounds();
+        youWinText.setOrigin(r.width / 2.f, r.height / 2.f);
+        youWinText.setPosition(400.f, 300.f);
     }
 
-    // sprite Game Over z pliku
-    Texture gameOverTex;
-    Sprite  gameOverSprite;
+    // sprite Game Over
+    Texture goTex;
+    Sprite  goSprite;
     bool    haveGOSprite = false;
-    if (gameOverTex.loadFromFile("game_over.png")) {
+    if (goTex.loadFromFile("game_over.png")) {
         haveGOSprite = true;
-        gameOverSprite.setTexture(gameOverTex);
-        Vector2u ts = gameOverTex.getSize();
-        Vector2u ws = window.getSize();
-        float sx = float(ws.x) / ts.x, sy = float(ws.y) / ts.y;
-        float scale = std::min(sx, sy);
-        gameOverSprite.setScale(scale, scale);
-        gameOverSprite.setOrigin(ts.x / 2.f, ts.y / 2.f);
-        gameOverSprite.setPosition(ws.x / 2.f, ws.y / 2.f);
+        goSprite.setTexture(goTex);
+        float sx = float(window.getSize().x) / goTex.getSize().x;
+        goSprite.setScale(sx, sx);
+        goSprite.setOrigin(goTex.getSize().x / 2.f, goTex.getSize().y / 2.f);
+        goSprite.setPosition(400.f, 300.f);
     }
     else {
         std::cerr << "game_over.png missing\n";
     }
 
-    // meta (koniec poziomu)
+    // sprite Win
+    Texture winTex;
+    Sprite  winSprite;
+    bool    haveWinSprite = false;
+    if (winTex.loadFromFile("win.png")) {
+        haveWinSprite = true;
+        winSprite.setTexture(winTex);
+        float sx = float(window.getSize().x) / winTex.getSize().x;
+        winSprite.setScale(sx, sx);
+        winSprite.setOrigin(winTex.getSize().x / 2.f, winTex.getSize().y / 2.f);
+        winSprite.setPosition(400.f, 300.f);
+    }
+    else {
+        std::cerr << "win.png missing\n";
+    }
+
+    // cel poziomu (goal)
     RectangleShape goal(Vector2f(40.f, 40.f));
     goal.setFillColor(Color::Yellow);
 
@@ -97,8 +111,9 @@ int main()
     float levelWidth = 800.f;
     Clock levelClock;
 
-    // funkcja ładowania poziomu
+    // loader poziomów
     auto loadLevel = [&](int lvl) {
+        // usuń stare
         for (auto* p : platforms) delete p;
         platforms.clear();
         enemies.clear();
@@ -161,25 +176,27 @@ int main()
             break;
         }
 
-        // reset flag i timer
-        isGameOver = isWin = false;
+        // ustaw pozycję celu
+        goal.setPosition(levelWidth - 60.f, 510.f);
+
+        isGameOver = false;
+        isWin = false;
         levelClock.restart();
         };
 
-    // pętla gry
+    // główna pętla
     while (window.isOpen()) {
         Event ev;
         while (window.pollEvent(ev)) {
             if (ev.type == Event::Closed)
                 window.close();
 
-            // restart po Game Over / Win
+            // restart po GameOver/Win
             if ((isGameOver || isWin) && ev.type == Event::KeyPressed) {
                 menu.inMenu = true;
                 currentLevel = 0;
                 isGameOver = isWin = false;
             }
-
             // skok
             if (!menu.inMenu && !isGameOver && !isWin
                 && ev.type == Event::KeyPressed
@@ -189,7 +206,6 @@ int main()
                 player.jump();
                 jumpSound.play();
             }
-
             // strzał
             if (!menu.inMenu && !isGameOver && !isWin
                 && ev.type == Event::MouseButtonPressed
@@ -203,8 +219,7 @@ int main()
         }
 
         // update platform
-        for (auto* p : platforms)
-            p->update();
+        for (auto* p : platforms) p->update();
 
         // menu
         if (menu.inMenu) {
@@ -214,14 +229,13 @@ int main()
             window.display();
             continue;
         }
-
         // load level
         if (currentLevel != menu.selectedLevel) {
             loadLevel(menu.selectedLevel);
             currentLevel = menu.selectedLevel;
         }
 
-        // sterowanie gracza
+        // sterowanie graczem
         if (!isGameOver && !isWin) {
             if (Keyboard::isKeyPressed(Keyboard::A)) player.move(-4.f);
             if (Keyboard::isKeyPressed(Keyboard::D)) player.move(4.f);
@@ -230,13 +244,13 @@ int main()
         // logika gry
         if (!isGameOver && !isWin) {
             player.update(platforms);
-            for (auto& h : hazards)
-                h.update(player);
+            for (auto& h : hazards) h.update(player);
 
             for (auto& e : enemies) {
                 Sound& snd = (e.type == Enemy::PISTOL ? pistolSound : shotgunSound);
                 e.update(platforms, player, snd);
 
+                // trafienia gracz→wróg
                 for (auto& b : player.bullets)
                     if (b.active && b.shape.getGlobalBounds()
                         .intersects(e.shape.getGlobalBounds()))
@@ -244,6 +258,7 @@ int main()
                         e.takeDamage(40);
                         b.active = false;
                     }
+                // trafienia wróg→gracz
                 for (auto& b : e.bullets)
                     if (b.active && b.shape.getGlobalBounds()
                         .intersects(player.getCollisionBounds()))
@@ -278,31 +293,32 @@ int main()
         window.setView(view);
 
         // render
-        window.clear(Color::Cyan);
+        window.clear();
 
         if (isGameOver) {
             window.setView(window.getDefaultView());
-            if (haveGOSprite)
-                window.draw(gameOverSprite);
-            else
-                window.draw(gameOverText);
+            window.draw(bgFull);
+            if (haveGOSprite) window.draw(goSprite);
+            else              window.draw(gameOverText);
         }
         else if (isWin) {
             window.setView(window.getDefaultView());
-            window.draw(youWin);
+            window.draw(bgFull);
+            if (haveWinSprite) window.draw(winSprite);
+            else               window.draw(youWinText);
         }
         else {
-            // zamiast tilingu, rysujemy zawsze tło rozciągnięte
+            // normalna rozgrywka
             window.setView(window.getDefaultView());
             window.draw(bgFull);
             window.setView(view);
 
-            for (auto* p : platforms)     window.draw(p->shape);
-            for (auto& h : hazards)       window.draw(h.shape);
             window.draw(goal);
+            for (auto* p : platforms) window.draw(p->shape);
             window.draw(player.shape);
             window.draw(player.hpBar);
-            for (auto& e : enemies)       window.draw(e.shape);
+            for (auto& h : hazards)   window.draw(h.shape);
+            for (auto& e : enemies)   window.draw(e.shape);
             for (auto& b : player.bullets)
                 if (b.active) window.draw(b.shape);
             for (auto& e : enemies)
@@ -313,7 +329,7 @@ int main()
         window.display();
     }
 
-    // cleanup
+    // sprzątanie
     for (auto* p : platforms)
         delete p;
     return 0;

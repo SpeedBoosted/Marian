@@ -7,9 +7,9 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.3520
   (kompilowanie pliku źródłowego „apkatest.cpp”)
       C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xutility(462,85):
       kontekst tworzenia wystąpienia szablonu (najpierw najstarszy) to
-          C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(115,21):
+          C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(130,21):
           zobacz odwołanie do kompilowanego tworzenia wystąpienia „Enemy &std::vector<Enemy,std::allocator<Enemy>>::emplace_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-              C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(115,33):
+              C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(130,33):
               zobacz pierwsze odwołanie do elementu „std::vector<Enemy,std::allocator<Enemy>>::emplace_back” w „main::<lambda_1>::operator ()”
           C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(924,24):
           zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_one_at_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
