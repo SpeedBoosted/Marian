@@ -44,6 +44,7 @@ Bullet::Bullet(float x, float y, float vx, float vy)
     shape.setPosition(x, y);
     shape.setSize({ 10,5 });
     shape.setFillColor(Color::Yellow);
+    damage = 10;
 }
 void Bullet::update() {
     if (active) shape.move(velocity);
@@ -143,10 +144,26 @@ Enemy::Enemy(float x, float y, Type t)
     shootCooldown = (type == PISTOL ? 0.8f : 1.5f);
     shootClock.restart();
 }
-void Enemy::update(const vector<Platform*>& plats,
-    const Player& pl,
-    Sound& snd)
-{
+void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::Sound& snd) {
+    if (type == BOSS) {
+        bossCenter = sf::Vector2f(1000, 500);
+        bossRadius = 300;
+        bossTime += 0.1f; // prędkość
+        // Ruch po znaku nieskończoności
+        float t = bossTime * 0.5f;
+        float a = bossRadius;
+        float x = a * std::sin(t) / (1 + std::pow(std::cos(t), 2));
+        float y = a * std::sin(t) * std::cos(t) / (1 + std::pow(std::cos(t), 2));
+        shape.setPosition(bossCenter.x + x, bossCenter.y + y);
+        // szczelanko
+        if (shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
+            shootBossAttack(pl);
+            snd.play();
+            shootClock.restart();
+        }
+        for (auto& b : bullets) b.update();
+        return;
+    }
     if (!alive) return;
     bool onPlat = false; const Platform* base = nullptr;
     auto eB = shape.getGlobalBounds();
@@ -220,6 +237,19 @@ void Enemy::shootShotgun(const Player& pl) {
         bullets.emplace_back(e.x, e.y, cos(ang) * spd, sin(ang) * spd);
     }
 }
+void Enemy::shootBossAttack(const Player& pl) {
+    auto e = shape.getPosition() + shape.getSize() / 2.f;
+    auto p = pl.shape.getPosition();
+    float dx = p.x - e.x, dy = p.y - e.y;
+    float len = sqrt(dx * dx + dy * dy);
+    if (len > 0) {
+        Bullet b(e.x, e.y, dx / len * 8.f, dy / len * 8.f);
+        b.shape.setSize({ 30, 15 }); // 3x bigger
+        b.shape.setFillColor(sf::Color::Red); // optional visual distinction
+        b.damage = 30; // 3x more powerful (default was 10)
+        bullets.push_back(b);
+    }
+}
 void Enemy::takeDamage(int amt) {
     hp = max(0, hp - amt);
     if (hp == 0) alive = false;
@@ -267,6 +297,8 @@ Menu::Menu() :inMenu(true), selectedLevel(0) {
     t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 200);
     t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 300);
     t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 400);
+    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300, 500);
+    t5.setFont(font); t5.setString("5: Level 5"); t3.setPosition(300, 600);
     if (!bgTexture.loadFromFile("tlo_menu.png"))
         cerr << "tlo_menu.png missing\n";
     bgSprite.setTexture(bgTexture);
@@ -284,6 +316,14 @@ void Menu::handleInput() {
     {
         selectedLevel = 3; inMenu = false;
     }
+    if (Keyboard::isKeyPressed(Keyboard::Num4))
+    {
+        selectedLevel = 4; inMenu = false;
+    }
+    if (Keyboard::isKeyPressed(Keyboard::Num5))
+    {
+        selectedLevel = 5; inMenu = false;
+    }
 }
 void Menu::draw(RenderWindow& w) {
     auto ws = w.getSize();
@@ -291,5 +331,5 @@ void Menu::draw(RenderWindow& w) {
     float sy = float(ws.y) / bgTexture.getSize().y;
     bgSprite.setScale(sx, sy);
     w.draw(bgSprite);
-    w.draw(t1); w.draw(t2); w.draw(t3);
+	w.draw(t1); w.draw(t2); w.draw(t3); w.draw(t4); w.draw(t5);
 }

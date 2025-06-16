@@ -12,3 +12,5 @@ struct LevelData {
 LevelData createLevel1();
 LevelData createLevel2();
 LevelData createLevel3();
+LevelData createLevel4();
+LevelData createLevel5();

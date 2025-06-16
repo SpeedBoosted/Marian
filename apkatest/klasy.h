@@ -28,6 +28,7 @@ public:
     sf::RectangleShape shape;
     sf::Vector2f      velocity;
     bool              active;
+    int damage = 10;
     Bullet(float x, float y, float vx, float vy);
     void update();
 };
@@ -58,10 +59,11 @@ public:
 
 class Enemy {
 public:
-    enum Type { PISTOL, SHOTGUN };
+    enum Type { PISTOL, SHOTGUN, BOSS };
     enum State { Patrol, Chase, Attack, Retreat };
 
     sf::RectangleShape   shape;
+    int hits = 0;
     float                speed;
     bool                 alive;
     int                  hp;
@@ -73,6 +75,9 @@ public:
     float                shootCooldown;
     sf::Clock            shootClock;
     std::vector<Bullet>  bullets;
+    float bossTime = 0.f; // tylko dla bossa te 3 som
+    sf::Vector2f bossCenter;
+    float bossRadius = 120.f;
 
     Enemy(float x = 0, float y = 0, Type t = PISTOL);
     void update(const std::vector<Platform*>& plats,
@@ -83,6 +88,7 @@ public:
 private:
     void shootPistol(const Player& pl);
     void shootShotgun(const Player& pl);
+    void shootBossAttack(const Player& pl);
     bool canSeePlayer(const Player& pl,
         const std::vector<Platform*>& plats);
 };
@@ -100,7 +106,7 @@ private:
 class Menu {
 public:
     sf::Font   font;
-    sf::Text   t1, t2, t3;
+    sf::Text   t1, t2, t3, t4, t5;
     bool       inMenu;
     int        selectedLevel;
     sf::Texture bgTexture;
