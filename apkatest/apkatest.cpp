@@ -27,6 +27,8 @@ int main()
         std::cerr << "background.png missing\n";
     vector<Sprite> bgTiles;
 
+    std::vector<Alcohol> drinks;
+
     // dźwięki
     SoundBuffer jb, sb, pb, shb, bb;
     jb.loadFromFile("jump.wav");
@@ -131,12 +133,20 @@ int main()
             case 1:
                 levelWidth = 1800.f;
                 player = Player(50, 500);
+                player.resetAlcoholEffects();
                 platforms.push_back(new Platform(0, 550, levelWidth, 50));
                 platforms.push_back(new Platform(300, 450, 150, 20));
                 platforms.push_back(new MovingPlatform(700, 350, 120, 20, { 1.2f,0 }, 120));
                 platforms.push_back(new Platform(1100, 300, 100, 20));
                 enemies.emplace_back(400, 510, Enemy::PISTOL);
                 hazards.emplace_back(500, 530, 100, 20);
+                player.resetAlcoholEffects();
+                drinks.clear();
+                drinks.emplace_back(Alcohol(AlcoholType::Piwo, 200.f, 520.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wodka, 250.f, 520.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Kubus, 300.f, 520.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wino, 350.f, 520.f));
+                std::cout << "Spawned " << drinks.size() << " drinks for level 1\n";
                 playMusic(level1Music);
                 wallActive = false;
                 break;
@@ -359,9 +369,14 @@ int main()
         if (!isGameOver && !isWin) {
             if (Keyboard::isKeyPressed(Keyboard::A)) player.move(-4.f);
             if (Keyboard::isKeyPressed(Keyboard::D)) player.move(4.f);
-        }
+            player.pickUpAlcohol(drinks);
 
-        if (!isGameOver && !isWin) {
+            if (Keyboard::isKeyPressed(Keyboard::R))
+                player.selectedAlcohol = AlcoholType((int(player.selectedAlcohol) + 1) % 4);
+            if (Keyboard::isKeyPressed(Keyboard::T))
+                player.selectedAlcohol = AlcoholType((int(player.selectedAlcohol) + 3) % 4);
+            if (Keyboard::isKeyPressed(Keyboard::G))
+                player.useAlcohol();
             player.update(platforms);
 
             // pułapki raniące co sekundę po 10 HP
@@ -442,7 +457,16 @@ int main()
         cam.y = std::max(minY, std::min(cam.y, maxY));
         view.setCenter(cam);
         window.setView(view);
-
+        // potkimenu
+        sf::Text potionText;
+        potionText.setFont(font);
+        std::string names[4] = { "Piwo", "Wodka", "Kubus", "Wino" };
+        potionText.setString(names[int(player.selectedAlcohol)] + ": " + std::to_string(player.alcoholInventory[player.selectedAlcohol]));
+        potionText.setCharacterSize(24);
+        potionText.setFillColor(sf::Color::White);
+        potionText.setPosition(10, 10);
+        if (!menu.inMenu && !isGameOver && !inCredits)
+            window.draw(potionText);
         // render
         window.clear(Color::Cyan);
         if (isGameOver) {
@@ -451,6 +475,7 @@ int main()
         }
         else {
             for (auto& s : bgTiles) window.draw(s);
+            for (auto& a : drinks) if (!a.picked) window.draw(a.shape);
             for (auto* p : platforms) window.draw(p->shape);
             for (auto& h : hazards) window.draw(h.shape);
             if (wallActive)
@@ -462,6 +487,18 @@ int main()
             for (auto& b : player.bullets) if (b.active) window.draw(b.shape);
             for (auto& e : enemies)
                 for (auto& b : e.bullets) if (b.active) window.draw(b.shape);
+            sf::Font font;
+            font.loadFromFile("arial.ttf");
+            if (!menu.inMenu && !isGameOver && !inCredits) {
+                sf::Text potionText;
+                potionText.setFont(font);
+                std::string names[4] = { "Piwo", "Wodka", "Kubus", "Wino" };
+                potionText.setString(names[int(player.selectedAlcohol)] + ": " + std::to_string(player.alcoholInventory[player.selectedAlcohol]));
+                potionText.setCharacterSize(24);
+                potionText.setFillColor(sf::Color::White);
+                potionText.setPosition(10.f, 10.f);
+                window.draw(potionText);
+            }
         }
         window.display();
     }

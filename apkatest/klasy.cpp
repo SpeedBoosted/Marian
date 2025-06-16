@@ -4,6 +4,7 @@
 #include <SFML/Audio.hpp>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 using namespace sf;
 using namespace std;
 
@@ -290,6 +291,72 @@ void Hazard::update(Player& p) {
         damageClock.restart();
     }
 }
+
+Alcohol::Alcohol(AlcoholType t, float x, float y) : type(t) {
+    shape.setSize({ 30.f, 30.f });
+    shape.setPosition(x, y);
+    switch (t) {
+    case AlcoholType::Piwo: shape.setFillColor(sf::Color::Yellow); break;
+    case AlcoholType::Wodka: shape.setFillColor(sf::Color::White); break;
+    case AlcoholType::Kubus: shape.setFillColor(sf::Color::Magenta); break;
+    case AlcoholType::Wino: shape.setFillColor(sf::Color::Red); break;
+    }
+}
+
+void Player::pickUpAlcohol(std::vector<Alcohol>& drinks) {
+    for (auto& a : drinks) {
+        if (!a.picked && shape.getGlobalBounds().intersects(a.shape.getGlobalBounds())) {
+            alcoholInventory[a.type]++;
+            a.picked = true;
+            std::cout << "Picked up alcohol type: " << static_cast<int>(a.type) << "\n";
+
+            std::ofstream out("potki.txt", std::ios::trunc);
+            if (!out.is_open()) {
+                std::cerr << "Could not open potki.txt for writing.\n";
+                continue;
+            }
+            for (const auto& pair : alcoholInventory) {
+                out << static_cast<int>(pair.first) << " " << pair.second << "\n";
+            }
+        }
+    }
+}
+
+
+void Player::useAlcohol() {
+    if (alcoholInventory[selectedAlcohol] > 0) {
+        alcoholInventory[selectedAlcohol]--;
+
+        switch (selectedAlcohol) {
+        case AlcoholType::Piwo: jumpBoost += 0.5f; break;
+        case AlcoholType::Wodka: cooldownPenalty *= 2.f; break;
+        case AlcoholType::Kubus: speedBoost += 0.1f; break;
+        case AlcoholType::Wino: damageBoost += 0.2f; break;
+        }
+
+        std::ofstream out("potki.txt", std::ios::trunc);
+        if (!out.is_open()) {
+            std::cerr << "Could not open potki.txt for writing.\n";
+            return;
+        }
+        for (const auto& pair : alcoholInventory) {
+            out << static_cast<int>(pair.first) << " " << pair.second << "\n";
+        }
+    }
+}
+
+void Player::resetAlcoholEffects() {
+    jumpBoost = 0.f;
+    speedBoost = 1.f;
+    damageBoost = 1.f;
+    cooldownPenalty = 1.f;
+    alcoholInventory.clear();
+    hp = 100;
+    hpBar.setSize({ float(hp), 10 });
+    std::ofstream out("potki.txt", std::ios::trunc);
+    out.close();
+}
+
 
 // --- Menu ---
 Menu::Menu() :inMenu(true), selectedLevel(0) {

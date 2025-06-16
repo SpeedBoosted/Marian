@@ -3,6 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <vector>
+#include <map>
+#include <string>
 
 class Player;  // forward
 
@@ -32,6 +34,15 @@ public:
     Bullet(float x, float y, float vx, float vy);
     void update();
 };
+enum class AlcoholType { Piwo, Wodka, Kubus, Wino };
+
+class Alcohol {
+public:
+    Alcohol(AlcoholType type, float x, float y);
+    AlcoholType type;
+    sf::RectangleShape shape;
+    bool picked = false;
+};
 
 class Player {
 public:
@@ -53,6 +64,16 @@ public:
     void move(float dx);
     void takeDamage(int amt);
     void shoot(const sf::Vector2f& tgt);
+    std::map<AlcoholType, int> alcoholInventory;
+    AlcoholType selectedAlcohol = AlcoholType::Piwo;
+    float jumpBoost = 0;
+    float speedBoost = 1;
+    float damageBoost = 1;
+    float cooldownPenalty = 1;
+
+    void pickUpAlcohol(std::vector<Alcohol>& drinks);
+    void useAlcohol();
+    void resetAlcoholEffects();
 
     sf::FloatRect getCollisionBounds() const;
 };
