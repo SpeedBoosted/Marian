@@ -244,9 +244,9 @@ void Enemy::shootBossAttack(const Player& pl) {
     float len = sqrt(dx * dx + dy * dy);
     if (len > 0) {
         Bullet b(e.x, e.y, dx / len * 8.f, dy / len * 8.f);
-        b.shape.setSize({ 30, 15 }); // 3x bigger
-        b.shape.setFillColor(sf::Color::Red); // optional visual distinction
-        b.damage = 30; // 3x more powerful (default was 10)
+        b.shape.setSize({ 30, 15 });
+        b.shape.setFillColor(sf::Color::Red);
+        b.damage = 30;
         bullets.push_back(b);
     }
 }
@@ -294,11 +294,11 @@ void Hazard::update(Player& p) {
 // --- Menu ---
 Menu::Menu() :inMenu(true), selectedLevel(0) {
     if (!font.loadFromFile("flame.otf")) cerr << "flame.otf missing\n";
-    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 200);
-    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 300);
-    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 400);
-    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300, 500);
-    t5.setFont(font); t5.setString("5: Level 5"); t3.setPosition(300, 600);
+    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 100);
+    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 150);
+    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 200);
+    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300, 250);
+    t5.setFont(font); t5.setString("5: Level 5"); t3.setPosition(300, 300);
     if (!bgTexture.loadFromFile("tlo_menu.png"))
         cerr << "tlo_menu.png missing\n";
     bgSprite.setTexture(bgTexture);

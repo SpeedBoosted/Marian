@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <functional>
 
 using namespace sf;
 using std::vector;
@@ -48,7 +49,9 @@ int main()
     level2Music.setLoop(true);
     level3Music.setLoop(true);
 
-    // GameOver/YouWin
+    std::function<void(int)> loadLevel;
+
+    // GameOver
     Font font; font.loadFromFile("arial.ttf");
     Text gameOver("Rip BOZO!\nPress any key...", font, 40);
     gameOver.setFillColor(Color::Red);
@@ -69,9 +72,9 @@ int main()
     float creditsY = 600.f;
     const float creditsSpeed = 50.f; // px/s
     std::vector<std::string> creditsLines = {
-        "Autorzy:","Jan Dymek","Jan Dymek",
+        "Autorzy:","Jan Dymek","Mikolaj Fraszczak",
         "",
-        "W rolach głownych","Marian - Martin Yan","Przeciwnik 1 - Jason Mamoa","Przeciwnik 2 - Jan Dymek",
+        "W rolach glownych","Marian - Martin Yan","Przeciwnik 1 - Jason Mamoa","Przeciwnik 2 - Jan Dymek",
         "",
         "Muzyka:",
         "Elevator - Kevin MacLeod",
@@ -89,10 +92,10 @@ int main()
     Text creditsText("", font, 32);
     creditsText.setFillColor(Color::White);
     sf::Clock frameClock;
-
-    // meta
-    RectangleShape goal(Vector2f(40, 40));
-    goal.setFillColor(Color::Yellow);
+    Texture doorTex;
+    if (!doorTex.loadFromFile("door.png"))
+        std::cerr << "door.png missing\n";
+    Sprite doorSprite;
 
     // stan gry
     Menu menu;
@@ -105,6 +108,7 @@ int main()
     float levelWidth = 800.f;
     RectangleShape giantWall;
     bool wallActive = false;
+    sf::Clock wallClock;
     float wallSpeed = 0.f;
 	// muzowanie
     auto playMusic = [&](sf::Music& music) {
@@ -115,7 +119,7 @@ int main()
         music.play();
         };
     // loader poziomów
-    auto loadLevel = [&](int lvl)
+    loadLevel = [&](int lvl)
         {
             for (auto* p : platforms) delete p;
             platforms.clear();
@@ -134,8 +138,9 @@ int main()
                 enemies.emplace_back(400, 510, Enemy::PISTOL);
                 hazards.emplace_back(500, 530, 100, 20);
                 playMusic(level1Music);
-                break;
                 wallActive = false;
+                break;
+
             case 2:
                 levelWidth = 2400.f;
                 player = Player(50, 500);
@@ -162,7 +167,7 @@ int main()
                 levelWidth = 3200.f;
                 player = Player(50, 500);
                 platforms.push_back(new Platform(0, 550, levelWidth, 50));
-                for (int i = 0;i < 6;++i) {
+                for (int i = 0; i < 6; ++i) {
                     float x = 300 + 450 * i;
                     float y = 450 - (i % 2) * 80;
                     platforms.push_back(new Platform(x, y, 120, 20));
@@ -170,7 +175,7 @@ int main()
                 }
                 platforms.push_back(new Platform(1500, 200, 50, 350));
                 platforms.push_back(new Platform(2100, 350, 50, 200));
-                for (int i = 0;i < 3;++i)
+                for (int i = 0; i < 3; ++i)
                     enemies.emplace_back(700 + 600 * i, 510 - (i % 2) * 200, (i % 2 ? Enemy::SHOTGUN : Enemy::PISTOL));
                 for (auto& e : enemies) {
                     e.detectionRange = 650;
@@ -179,58 +184,88 @@ int main()
                     e.retreatThreshold = 40;
                     e.chaseThreshold = 70;
                 }
-                for (int i = 0;i < 4;++i)
+                for (int i = 0; i < 4; ++i)
                     hazards.emplace_back(900 + 500 * i, 530, 120, 20);
                 playMusic(level1Music);
                 wallActive = false;
                 break;
-            case 4:
-                levelWidth = 2000.f;
+
+            case 4: {
+                levelWidth = 1600.f;
                 player = Player(50, 500);
-                platforms.push_back(new Platform(0, 550, levelWidth, 50));
-                platforms.push_back(new Platform(400, 400, 200, 20));
-                platforms.push_back(new Platform(800, 300, 200, 20));
-                platforms.push_back(new Platform(1400, 400, 200, 20));
-                // Boss w środku poziomu
-                enemies.emplace_back(1000, 250, Enemy::BOSS);
-                // Możesz dodać inne przeszkody/hazardy
+                platforms.push_back(new Platform(0, 550, 300, 50));
+                platforms.push_back(new Platform(500, 550, 300, 50));
+                platforms.push_back(new Platform(900, 550, 250, 50));
+                platforms.push_back(new Platform(1250, 550, 350, 50));
+                platforms.push_back(new Platform(300, 450, 100, 20));
+                platforms.push_back(new Platform(650, 400, 100, 20));
+                platforms.push_back(new Platform(1000, 450, 100, 20));
+                enemies.emplace_back(600, 510, Enemy::SHOTGUN);
+                enemies.emplace_back(950, 510, Enemy::SHOTGUN);
+                for (auto& e : enemies) {
+                    e.detectionRange = 550;
+                    e.shootCooldown = 1.2f;
+                    e.speed *= 1.3f;
+                }
+                float bossX = 1400.f;
+                float bossY = 200.f;
+                enemies.emplace_back(bossX, bossY, Enemy::BOSS);
                 playMusic(level2Music);
                 wallActive = false;
                 break;
-
-            case 5:
+            }
+            case 5: {
                 levelWidth = 2500.f;
                 player = Player(50, 500);
+                // Ustawienia ściany śmierci
                 giantWall.setSize(Vector2f(60, 600));
                 giantWall.setFillColor(Color(120, 120, 120));
                 giantWall.setPosition(0, 0);
                 wallActive = true;
-                wallSpeed = 3.f;
+                wallSpeed = 200.f;
+                wallClock.restart();
                 platforms.push_back(new Platform(0, 550, levelWidth, 50));
-                platforms.push_back(new Platform(500, 450, 200, 20));
-                platforms.push_back(new Platform(1000, 350, 200, 20));
-                platforms.push_back(new Platform(1600, 250, 200, 20));
-                hazards.emplace_back(800, 530, 150, 20);
-                hazards.emplace_back(1800, 530, 200, 20);
+                platforms.push_back(new Platform(400, 480, 150, 20));
+                platforms.push_back(new MovingPlatform(700, 400, 120, 20, { 0, -1.5f }, 100));
+                platforms.push_back(new Platform(850, 300, 30, 250));
+                platforms.push_back(new Platform(1100, 470, 180, 20));
+                platforms.push_back(new MovingPlatform(1400, 370, 100, 20, { -2.0f, 0 }, 200));
+                platforms.push_back(new Platform(1700, 320, 150, 20));
+                platforms.push_back(new Platform(1650, 250, 30, 300));
+                platforms.push_back(new MovingPlatform(1950, 250, 100, 20, { 0, 2.0f }, 120));
+                platforms.push_back(new Platform(2150, 350, 120, 20));
+                platforms.push_back(new Platform(2350, 450, 100, 20));
+                platforms.push_back(new Platform(2250, 220, 30, 330));
                 playMusic(level3Music);
                 break;
+            }
+
             }
 
             // kafelkowanie tła
             bgTiles.clear();
             int tw = bgTex.getSize().x, th = bgTex.getSize().y;
-            float sy = 600.f / float(th), tileW = tw * sy;
+            float sy = (600.f / float(th)) * 2.0f;
+            float tileW = tw * sy;
             int cnt = int(std::ceil(levelWidth / tileW));
-            for (int i = 0;i < cnt;i++) {
+            for (int i = 0; i < cnt; i++) {
                 Sprite s(bgTex);
                 s.setScale(sy, sy);
                 s.setPosition(i * tileW, 0);
                 bgTiles.push_back(s);
             }
 
-            goal.setPosition(levelWidth - 60, 510);
+            doorSprite.setTexture(doorTex);
+            doorSprite.setScale(0.1f, 0.1f);
+            float groundY = 510.f;
+            Vector2f doorTexSize = Vector2f(
+                doorTex.getSize().x * doorSprite.getScale().x,
+                doorTex.getSize().y * doorSprite.getScale().y
+            );
+            doorSprite.setPosition(levelWidth - doorTexSize.x, groundY - doorTexSize.y);
             isGameOver = isWin = false;
         };
+
 
     // pętla gry
     while (window.isOpen())
@@ -333,46 +368,45 @@ int main()
             for (auto& h : hazards)
                 h.update(player);
 
+            if (wallActive && wallClock.getElapsedTime().asSeconds() >= 2.f) {
+                Vector2f pos = giantWall.getPosition();
+                pos.x += wallSpeed * deltaTime;
+                if (pos.x + giantWall.getSize().x > levelWidth)
+                    pos.x = levelWidth - giantWall.getSize().x;
+                giantWall.setPosition(pos);
+
+                if (giantWall.getGlobalBounds().intersects(player.shape.getGlobalBounds())) {
+                    player.hp = 0;
+                    isGameOver = true;
+                }
+            }
+            // 👾 wrogowie
             for (auto& e : enemies) {
                 if (!e.alive) continue;
                 Sound& snd = (e.type == Enemy::PISTOL ? pistolSound : (e.type == Enemy::SHOTGUN ? shotgunSound : bossSound));
                 e.update(platforms, player, snd);
-                if (wallActive) {
-                    Vector2f pos = giantWall.getPosition();
-                    pos.x += wallSpeed * deltaTime;
-                    if (pos.x + giantWall.getSize().x > levelWidth)
-                        pos.x = levelWidth - giantWall.getSize().x;
-                    giantWall.setPosition(pos);
-
-                    if (giantWall.getGlobalBounds().intersects(player.shape.getGlobalBounds())) {
-                        player.hp = 0;
-                        isGameOver = true;
-                    }
-                }
 
                 for (auto& b : player.bullets)
-                    if (b.active && b.shape.getGlobalBounds()
-                        .intersects(e.shape.getGlobalBounds())) {
+                    if (b.active && b.shape.getGlobalBounds().intersects(e.shape.getGlobalBounds())) {
                         if (e.type == Enemy::BOSS) {
                             e.hits++;
-                            if (e.hits >= 5) {
-                                e.alive = false;
-                            }
+                            if (e.hits >= 5) e.alive = false;
                         }
                         else {
                             e.takeDamage(40);
                         }
                         b.active = false;
                     }
+
                 for (auto& b : e.bullets)
-                    if (b.active && b.shape.getGlobalBounds()
-                        .intersects(player.getCollisionBounds())) {
-                        player.takeDamage(10); b.active = false;
+                    if (b.active && b.shape.getGlobalBounds().intersects(player.getCollisionBounds())) {
+                        player.takeDamage(10);
+                        b.active = false;
                     }
             }
 
             if (player.hp <= 0) isGameOver = true;
-            if (player.shape.getGlobalBounds().intersects(goal.getGlobalBounds())) {
+            if (player.shape.getGlobalBounds().intersects(doorSprite.getGlobalBounds())) {
                 // Sprawdź czy to poziom 4 i boss żyje
                 bool bossAlive = false;
                 if (menu.selectedLevel == 4) {
@@ -402,6 +436,10 @@ int main()
         // kamera
         Vector2f cam = player.shape.getPosition() + player.shape.getSize() / 2.f;
         cam.x = std::max(400.f, std::min(cam.x, levelWidth - 400.f));
+        float bgVisibleHeight = bgTex.getSize().y * ((600.f / bgTex.getSize().y) * 2.0f);
+        float minY = 300.f;
+        float maxY = bgVisibleHeight - 600.f;
+        cam.y = std::max(minY, std::min(cam.y, maxY));
         view.setCenter(cam);
         window.setView(view);
 
@@ -414,10 +452,10 @@ int main()
         else {
             for (auto& s : bgTiles) window.draw(s);
             for (auto* p : platforms) window.draw(p->shape);
-            for (auto& h : hazards)   window.draw(h.shape);
+            for (auto& h : hazards) window.draw(h.shape);
             if (wallActive)
                 window.draw(giantWall);
-            window.draw(goal);
+			window.draw(doorSprite);
             window.draw(player.shape);
             window.draw(player.hpBar);
             for (auto& e : enemies) if (e.alive) window.draw(e.shape);
@@ -428,6 +466,6 @@ int main()
         window.display();
     }
 
-    for (auto* p : platforms) delete p;
+    for (auto* p : platforms) delete p; 
     return 0;
 }
