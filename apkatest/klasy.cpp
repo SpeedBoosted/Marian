@@ -22,6 +22,7 @@ Texture Alcohol::wineTexture;
 Texture Enemy::pistolEnemyTexture;
 Texture Enemy::shotgunEnemyTexture;
 Texture Hazard::texture;
+Texture Enemy::bossTexture;
 
 // --- Platform ---
 Platform::Platform(float x, float y, float w, float h) {
@@ -196,10 +197,15 @@ Enemy::Enemy(float x, float y, Type t)
         shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
     }
     else {
-        currentEnemyWidth = 40.f;
-        currentEnemyHeight = 40.f;
+        if (bossTexture.getSize().x == 0) {
+            if (!bossTexture.loadFromFile("boss.png"))
+                std::cerr << "boss.png missing\n";
+        }
+        shape.setTexture(&bossTexture);
+        currentEnemyWidth = static_cast<float>(bossTexture.getSize().x);
+        currentEnemyHeight = static_cast<float>(bossTexture.getSize().y);
         shape.setSize({ currentEnemyWidth, currentEnemyHeight });
-        shape.setFillColor(Color(139, 69, 19));
+        shape.setTextureRect({ 0, 0, (int)currentEnemyWidth, (int)currentEnemyHeight });
         shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
     }
 
@@ -537,11 +543,11 @@ void Player::resetAlcoholEffects() {
 // --- Menu ---
 Menu::Menu() :inMenu(true), selectedLevel(0) {
     if (!font.loadFromFile("edosz.ttf")) cerr << "missing\n";
-    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300.f, 100.f);
-    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300.f, 150.f);
-    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300.f, 200.f);
-    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300.f, 250.f);
-    t5.setFont(font); t5.setString("5: Level 5"); t5.setPosition(300.f, 300.f);
+    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300.f, 160.f);
+    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300.f, 210.f);
+    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300.f, 260.f);
+    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300.f, 300.f);
+    t5.setFont(font); t5.setString("5: Level 5"); t5.setPosition(300.f, 360.f);
     if (!bgTexture.loadFromFile("tlo_menu.png")) cerr << "tlo_menu.png missing\n";
     bgSprite.setTexture(bgTexture);
 }

@@ -23,7 +23,6 @@ public:
         const sf::Vector2f& vel, float t);
     void update() override;
 };
-
 class Bullet {
 public:
     sf::RectangleShape shape;
@@ -106,6 +105,7 @@ public:
     float bossTime = 0.f;
     sf::Vector2f bossCenter;
     float bossRadius = 120.f;
+    static sf::Texture bossTexture;
 
     static sf::Texture pistolEnemyTexture;
     int pistolFrameCount = 10;

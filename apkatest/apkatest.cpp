@@ -43,7 +43,7 @@ int main()
     shb.loadFromFile("shotgun.wav");
     bb.loadFromFile("boss1.wav");
     Sound jumpSound(jb), shootSound(sb), pistolSound(pb), shotgunSound(shb), bossSound(bb);
-    sf::Music menuMusic, level1Music, level2Music, level3Music;
+    sf::Music menuMusic, level1Music, level2Music, level3Music, level4Music;
     if (!menuMusic.openFromFile("menumuza.wav"))
         std::cerr << "menumuza.wav missing\n";
     if (!level1Music.openFromFile("level1.wav"))
@@ -52,13 +52,15 @@ int main()
         std::cerr << "level2.wav missing\n";
     if (!level3Music.openFromFile("level3.wav"))
         std::cerr << "level3.wav missing\n";
+    if (!level3Music.openFromFile("level4.wav"))
+        std::cerr << "level4.wav missing\n";
     menuMusic.setLoop(true);
     level1Music.setLoop(true);
     level2Music.setLoop(true);
     level3Music.setLoop(true);
+    level4Music.setLoop(true);
 
     std::function<void(int)> loadLevel;
-
     // Ekran GameOver
     Font font; font.loadFromFile("arial.ttf");
     Text gameOverText("Rip BOZO!\nPress any key...", font, 40);
@@ -89,12 +91,14 @@ int main()
     std::vector<std::string> creditsLines = {
         "Autorzy:","Jan Dymek","Mikolaj Fraszczak",
         "",
-        "W rolach glownych","Marian - Martin Yan","Przeciwnik 1 - Jason Mamoa","Przeciwnik 2 - Jan Dymek",
+        "W rolach glownych","Marian - Martin Yan","Przeciwnik 1 - Jason Mamoa","Przeciwnik 2 - Jan Dymek","Boss - Przeciwnik Trzy",
         "",
         "Muzyka:",
         "Elevator - Kevin MacLeod",
         "Spazzmatica Polka - Kevin MacLeod",
-        "Spazzmatica Polka - Kevin MacLeod",
+        "Sneaky Snitch - Kevin MacLeod",
+        "Sneaky Adventure - Kevin MacLeod",
+        "Five Armies - Kevin MacLeod",
         "Spazzmatica Polka - Kevin MacLeod",
         "Nothings Gonna Stop Us Now - Greg O'Connor",
         "",
@@ -131,6 +135,7 @@ int main()
         level1Music.stop();
         level2Music.stop();
         level3Music.stop();
+        level4Music.stop();
         music.play();
         };
     // Lambda funkcja do ładowania poziomów
@@ -174,6 +179,10 @@ int main()
                 platforms.push_back(new MovingPlatform(900.f, 300.f, 100.f, 20.f, { 0.f,1.8f }, 150.f));
                 platforms.push_back(new Platform(1400.f, 380.f, 150.f, 20.f));
                 platforms.push_back(new Platform(1800.f, 310.f, 120.f, 20.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Piwo, 220.f, 450.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wino, 550.f, 370.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wodka, 950.f, 270.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Kubus, 1450.f, 350.f));
                 enemies.emplace_back(600.f, 550.f, Enemy::PISTOL);
                 enemies.emplace_back(1800.f + 120.f / 2.f, 310.f, Enemy::SHOTGUN);
                 for (auto& e : enemies) {
@@ -199,6 +208,10 @@ int main()
                 }
                 platforms.push_back(new Platform(1500.f, 200.f, 50.f, 350.f));
                 platforms.push_back(new Platform(2100.f, 350.f, 50.f, 200.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Kubus, 300.f, 420.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wodka, 900.f, 350.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Piwo, 1350.f, 160.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wino, 2150.f, 320.f));
                 for (int i = 0; i < 3; ++i)
                     enemies.emplace_back(700.f + 600.f * i, 550.f - (i % 2) * 200.f, (i % 2 ? Enemy::SHOTGUN : Enemy::PISTOL));
                 for (auto& e : enemies) {
@@ -224,12 +237,16 @@ int main()
                 platforms.push_back(new Platform(300.f, 450.f, 100.f, 20.f));
                 platforms.push_back(new Platform(650.f, 400.f, 100.f, 20.f));
                 platforms.push_back(new Platform(1000.f, 450.f, 100.f, 20.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Piwo, 320.f, 420.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wino, 1050.f, 420.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Kubus, 670.f, 370.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wodka, 1270.f, 520.f));
                 enemies.emplace_back(600.f, 550.f, Enemy::SHOTGUN);
                 enemies.emplace_back(950.f, 550.f, Enemy::SHOTGUN);
                 float bossX = 1400.f;
                 float bossY = 550.f;
                 enemies.emplace_back(bossX, bossY, Enemy::BOSS);
-                playMusic(level2Music);
+                playMusic(level4Music);
                 wallActive = false;
                 break;
             }
@@ -261,6 +278,10 @@ int main()
                 platforms.push_back(new Platform(2150.f, 350.f, 120.f, 20.f));
                 platforms.push_back(new Platform(2350.f, 450.f, 100.f, 20.f));
                 platforms.push_back(new Platform(2250.f, 220.f, 30.f, 330.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wodka, 420.f, 450.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Kubus, 1120.f, 440.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Wino, 1420.f, 340.f));
+                drinks.emplace_back(Alcohol(AlcoholType::Piwo, 1750.f, 290.f));
                 playMusic(level3Music);
                 break;
             }
@@ -407,6 +428,10 @@ int main()
             if (Keyboard::isKeyPressed(Keyboard::G))
                 player.useAlcohol();
             player.update(platforms);
+            if (player.shape.getPosition().y > 600.f) {
+                player.hp = 0;
+                isGameOver = true;
+            }
 
             // Aktualizacja pułapek
             for (auto& h : hazards)
