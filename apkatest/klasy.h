@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <vector>
 #include <map>
 #include <string>
 
-class Player;  // forward
+class Player; // forward
 
 class Platform {
 public:
@@ -27,12 +27,13 @@ public:
 class Bullet {
 public:
     sf::RectangleShape shape;
-    sf::Vector2f       velocity;
-    bool               active;
+    sf::Vector2f         velocity;
+    bool                 active;
     int damage = 10;
     Bullet(float x, float y, float vx, float vy);
     void update();
 };
+
 enum class AlcoholType { Piwo, Wodka, Kubus, Wino };
 
 class Alcohol {
@@ -42,7 +43,7 @@ public:
     sf::RectangleShape shape;
     bool picked = false;
 
-    // Statyczne tekstury dla ka¿dego typu alkoholu
+    // Statyczne tekstury dla kaÅ¼dego typu alkoholu
     static sf::Texture beerTexture;
     static sf::Texture wodkaTexture;
     static sf::Texture kubusTexture;
@@ -52,9 +53,9 @@ public:
 class Player {
 public:
     sf::RectangleShape shape, hpBar;
-    sf::Vector2f       velocity;
-    bool               onGround;
-    int                hp;
+    sf::Vector2f         velocity;
+    bool                 onGround;
+    int                  hp;
     std::vector<Bullet> bullets;
 
     static sf::Texture runTexture;
@@ -62,7 +63,7 @@ public:
     float  timePerFrame = 0.08f;
     int    currentFrame = 0;
     sf::Clock animClock;
-    sf::Clock damageClock; // Dodany clock do obs³ugi hazardów
+    sf::Clock damageClock; // Dodany clock do obsÅ‚ugi hazardÃ³w
 
     Player(float x = 0, float y = 0);
     void update(const std::vector<Platform*>& plats);
@@ -106,6 +107,20 @@ public:
     sf::Vector2f bossCenter;
     float bossRadius = 120.f;
 
+    // Nowe zmienne dla animacji wroga PISTOL
+    static sf::Texture pistolEnemyTexture; // Statyczna tekstura dla wroga PISTOL
+    int pistolFrameCount = 10; // Liczba klatek w animacji
+    float pistolTimePerFrame = 0.1f; // Czas na klatkÄ™ (dostosuj, jeÅ›li potrzeba)
+    int currentPistolFrame = 0;
+    sf::Clock pistolAnimClock;
+
+    // Nowe zmienne dla animacji wroga SHOTGUN
+    static sf::Texture shotgunEnemyTexture; // Statyczna tekstura dla wroga SHOTGUN
+    int shotgunFrameCount = 10; // Liczba klatek w animacji (zakÅ‚adam, Å¼e tyle samo)
+    float shotgunTimePerFrame = 0.1f; // Czas na klatkÄ™ (dostosuj)
+    int currentShotgunFrame = 0;
+    sf::Clock shotgunAnimClock;
+
     Enemy(float x = 0, float y = 0, Type t = PISTOL);
     void update(const std::vector<Platform*>& plats,
         const Player& pl,
@@ -123,12 +138,11 @@ private:
 class Hazard {
 public:
     sf::RectangleShape shape;
+    static sf::Texture  texture; // Dodano statycznÄ… teksturÄ™
     Hazard(float x, float y, float w, float h);
     void update(Player& p);
 
 private:
-    // damageClock przeniesiony do klasy Hazard, aby ka¿dy hazard mia³ swój w³asny timer
-    // Nale¿y usun¹æ tê zmienn¹, jeœli wolisz mieæ damageClock w Player
     sf::Clock damageClock;
 };
 

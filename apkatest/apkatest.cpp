@@ -15,7 +15,15 @@ using std::vector;
 int main()
 {
     std::srand((unsigned)std::time(nullptr));
-    RenderWindow window(VideoMode(800, 600), "Marian");
+
+    // ***************************************************************
+    // KLUCZOWA ZMIANA: Wyłączenie antialiasingu dla piksel-artu
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 0; // Ustawienie antialiasingu na 0
+    // ***************************************************************
+
+    // Przekazanie ustawień kontekstu do konstruktora okna
+    RenderWindow window(VideoMode(800, 600), "Marian", sf::Style::Default, settings);
     window.setFramerateLimit(60);
 
     View view(Vector2f(400, 300), Vector2f(800, 600));
@@ -109,8 +117,8 @@ int main()
     Menu menu;
     Player player;
     vector<Platform*> platforms;
-    vector<Enemy>   enemies;
-    vector<Hazard>   hazards;
+    vector<Enemy>    enemies;
+    vector<Hazard>    hazards;
     bool isGameOver = false, isWin = false;
     int  currentLevel = 0;
     float levelWidth = 800.f;
@@ -133,7 +141,7 @@ int main()
             platforms.clear();
             enemies.clear();
             hazards.clear();
-            drinks.clear(); // Czyścimy listę drinków przy ładowaniu nowego poziomu
+            drinks.clear();
 
             switch (lvl)
             {
@@ -145,9 +153,9 @@ int main()
                 platforms.push_back(new Platform(300, 450, 150, 20));
                 platforms.push_back(new MovingPlatform(700, 350, 120, 20, { 1.2f,0 }, 120));
                 platforms.push_back(new Platform(1100, 300, 100, 20));
-                enemies.emplace_back(400, 510, Enemy::PISTOL);
+                // Poprawiona pozycja startowa dla wroga (Y = górna krawędź platformy)
+                enemies.emplace_back(400, 550, Enemy::PISTOL); // Na głównej platformie
                 hazards.emplace_back(500, 530, 100, 20);
-                // Tworzenie drinków dla poziomu 1
                 drinks.emplace_back(Alcohol(AlcoholType::Piwo, 200.f, 520.f));
                 drinks.emplace_back(Alcohol(AlcoholType::Wodka, 250.f, 520.f));
                 drinks.emplace_back(Alcohol(AlcoholType::Kubus, 300.f, 520.f));
@@ -166,8 +174,9 @@ int main()
                 platforms.push_back(new MovingPlatform(900, 300, 100, 20, { 0,1.8f }, 150));
                 platforms.push_back(new Platform(1400, 380, 150, 20));
                 platforms.push_back(new Platform(1800, 310, 120, 20));
-                enemies.emplace_back(600, 510, Enemy::PISTOL);
-                enemies.emplace_back(1600, 270, Enemy::SHOTGUN);
+                // Poprawione pozycje startowe
+                enemies.emplace_back(600, 550, Enemy::PISTOL); // Na głównej platformie
+                enemies.emplace_back(1800 + 120 / 2, 310, Enemy::SHOTGUN); // Na platformie (1800, 310)
                 for (auto& e : enemies) {
                     e.detectionRange = 550;
                     e.shootCooldown = (e.type == Enemy::PISTOL ? 0.6f : 1.2f);
@@ -192,7 +201,7 @@ int main()
                 platforms.push_back(new Platform(1500, 200, 50, 350));
                 platforms.push_back(new Platform(2100, 350, 50, 200));
                 for (int i = 0; i < 3; ++i)
-                    enemies.emplace_back(700 + 600 * i, 510 - (i % 2) * 200, (i % 2 ? Enemy::SHOTGUN : Enemy::PISTOL));
+                    enemies.emplace_back(700 + 600 * i, 550 - (i % 2) * 200, (i % 2 ? Enemy::SHOTGUN : Enemy::PISTOL)); // 550 to podstawa
                 for (auto& e : enemies) {
                     e.detectionRange = 650;
                     e.shootCooldown = (e.type == Enemy::PISTOL ? 0.5f : 1.0f);
@@ -216,15 +225,10 @@ int main()
                 platforms.push_back(new Platform(300, 450, 100, 20));
                 platforms.push_back(new Platform(650, 400, 100, 20));
                 platforms.push_back(new Platform(1000, 450, 100, 20));
-                enemies.emplace_back(600, 510, Enemy::SHOTGUN);
-                enemies.emplace_back(950, 510, Enemy::SHOTGUN);
-                for (auto& e : enemies) {
-                    e.detectionRange = 550;
-                    e.shootCooldown = 1.2f;
-                    e.speed *= 1.3f;
-                }
+                enemies.emplace_back(600, 550, Enemy::SHOTGUN);
+                enemies.emplace_back(950, 550, Enemy::SHOTGUN);
                 float bossX = 1400.f;
-                float bossY = 200.f;
+                float bossY = 550.f;
                 enemies.emplace_back(bossX, bossY, Enemy::BOSS);
                 playMusic(level2Music);
                 wallActive = false;
@@ -233,7 +237,6 @@ int main()
             case 5: {
                 levelWidth = 2500.f;
                 player = Player(50, 500);
-                // Ustawienia ściany śmierci
                 giantWall.setSize(Vector2f(60, 600));
                 giantWall.setFillColor(Color(120, 120, 120));
                 giantWall.setPosition(0, 0);
@@ -390,18 +393,18 @@ int main()
                 h.update(player);
 
             if (wallActive && wallClock.getElapsedTime().asSeconds() >= 2.f) {
+                // Używamy getCollisionBounds() dla kolizji ze ścianą
+                if (giantWall.getGlobalBounds().intersects(player.getCollisionBounds())) {
+                    player.hp = 0;
+                    isGameOver = true;
+                }
                 Vector2f pos = giantWall.getPosition();
                 pos.x += wallSpeed * deltaTime;
                 if (pos.x + giantWall.getSize().x > levelWidth)
                     pos.x = levelWidth - giantWall.getSize().x;
                 giantWall.setPosition(pos);
-
-                if (giantWall.getGlobalBounds().intersects(player.shape.getGlobalBounds())) {
-                    player.hp = 0;
-                    isGameOver = true;
-                }
             }
-            // 👾 wrogowie
+            // wrogowie
             for (auto& e : enemies) {
                 if (!e.alive) continue;
                 Sound& snd = (e.type == Enemy::PISTOL ? pistolSound : (e.type == Enemy::SHOTGUN ? shotgunSound : bossSound));
@@ -419,6 +422,7 @@ int main()
                         b.active = false;
                     }
 
+                // Kolizje pocisków wroga z graczem już używają getCollisionBounds(), więc jest OK.
                 for (auto& b : e.bullets)
                     if (b.active && b.shape.getGlobalBounds().intersects(player.getCollisionBounds())) {
                         player.takeDamage(10);
@@ -427,8 +431,8 @@ int main()
             }
 
             if (player.hp <= 0) isGameOver = true;
-            if (player.shape.getGlobalBounds().intersects(doorSprite.getGlobalBounds())) {
-                // Sprawdź czy to poziom 4 i boss żyje
+            // Używamy getCollisionBounds() dla kolizji z drzwiami
+            if (player.getCollisionBounds().intersects(doorSprite.getGlobalBounds())) {
                 bool bossAlive = false;
                 if (menu.selectedLevel == 4) {
                     for (const auto& e : enemies) {
@@ -439,7 +443,7 @@ int main()
                     }
                 }
                 if (menu.selectedLevel == 4 && bossAlive) {
-                    // Nie pozwól ukończyć poziomu
+                    // Nie pozwól ukończyć poziomu, dopóki boss żyje
                 }
                 else if (menu.selectedLevel < 5) {
                     menu.selectedLevel++;
@@ -478,7 +482,6 @@ int main()
         if (isGameOver) {
             window.setView(window.getDefaultView());
             window.draw(gameOverSprite);
-            // Opcjonalnie: Rysuj tekst "Press any key..." nałożony na obraz
             gameOverText.setPosition(window.getDefaultView().getCenter().x - gameOverText.getGlobalBounds().width / 2.f,
                 window.getDefaultView().getCenter().y + 150.f);
             window.draw(gameOverText);

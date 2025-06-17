@@ -20,6 +20,14 @@ Texture Alcohol::wodkaTexture;
 Texture Alcohol::kubusTexture;
 Texture Alcohol::wineTexture;
 
+// Inicjalizacja statycznej tekstury dla wroga PISTOL
+Texture Enemy::pistolEnemyTexture;
+// Inicjalizacja statycznej tekstury dla wroga SHOTGUN
+Texture Enemy::shotgunEnemyTexture;
+
+// Inicjalizacja statycznej tekstury dla Hazard
+Texture Hazard::texture; // Dodano inicjalizację statycznej tekstury
+
 // --- Platform ---
 Platform::Platform(float x, float y, float w, float h) {
     if (texture.getSize().x == 0) {
@@ -29,8 +37,8 @@ Platform::Platform(float x, float y, float w, float h) {
     }
     shape.setTexture(&texture);
     shape.setSize({ w,h });
-    shape.setPosition(x, y);
     shape.setTextureRect({ 0,0,int(w),int(h) });
+    shape.setPosition(x, y);
 }
 
 // --- MovingPlatform ---
@@ -67,10 +75,13 @@ Player::Player(float x, float y)
         if (!runTexture.loadFromFile("player_run.png"))
             cerr << "player_run.png missing\n";
     }
-    shape.setTexture(&runTexture);
     int fw = runTexture.getSize().x / frameCount;
     int fh = runTexture.getSize().y;
-    shape.setSize({ float(fw),float(fh) });
+
+    // Jeżeli gracz wizualnie jest za duży, dostosuj poniższe wartości
+    // np. shape.setSize({ fw * 0.8f, fh * 0.8f }); aby zmniejszyć o 20%
+    shape.setSize({ float(fw),float(fh) }); // Obecnie rozmiar shape jest równy oryginalnej klatce animacji
+    shape.setTexture(&runTexture);
     shape.setTextureRect({ 0,0,fw,fh });
     shape.setOrigin(fw / 2.f, fh / 2.f);
     shape.setPosition(x + fw / 2.f, y + fh / 2.f);
@@ -133,10 +144,24 @@ void Player::shoot(const Vector2f& tgt) {
     float len = sqrt(dx * dx + dy * dy);
     if (len > 0) bullets.emplace_back(c.x, c.y, dx / len * 8.f, dy / len * 8.f);
 }
+
+// TUTAJ SĄ KLUCZOWE ZMIANY DLA HITBOXA
 sf::FloatRect Player::getCollisionBounds() const {
-    auto b = shape.getGlobalBounds();
-    float sx = b.width * 0.7f, sy = b.height * 0.6f;
-    b.left += sx / 2; b.top += sy / 2; b.width -= sx; b.height -= sy;
+    auto b = shape.getGlobalBounds(); // Pobierz globalne granice sprite'a
+
+    // Procentowe zmniejszenie hitboxa z każdej strony.
+    // Np. 0.40f oznacza, że 40% szerokości z lewej i 40% z prawej zostanie "odcięte".
+    // Czyli zostanie 100% - (2 * 40%) = 20% oryginalnej szerokości.
+    float reduceX = b.width * 0.40f; // Daje 20% szerokości
+    float reduceY = b.height * 0.25f; // Daje 50% wysokości
+
+    // Zastosuj zmniejszenia
+    b.left += reduceX; // Przesuń lewą krawędź w prawo
+    b.width -= (reduceX * 2); // Zmniejsz szerokość o podwójną wartość reduceX
+
+    b.top += reduceY; // Przesuń górną krawędź w dół
+    b.height -= (reduceY * 2); // Zmniejsz wysokość o podwójną wartość reduceY
+
     return b;
 }
 
@@ -146,24 +171,59 @@ Enemy::Enemy(float x, float y, Type t)
     state(Patrol), detectionRange(500.f),
     retreatThreshold(30), chaseThreshold(60)
 {
-    shape.setPosition(x, y);
-    shape.setSize({ 40,40 });
-    shape.setFillColor(Color(139, 69, 19));
-    shootCooldown = (type == PISTOL ? 0.8f : 1.5f);
+    float currentEnemyWidth;
+    float currentEnemyHeight;
+
+    if (type == PISTOL) {
+        if (pistolEnemyTexture.getSize().x == 0) {
+            if (!pistolEnemyTexture.loadFromFile("enemy1.png"))
+                cerr << "enemy1.png missing\n";
+        }
+        shape.setTexture(&pistolEnemyTexture);
+        currentEnemyWidth = (float)pistolEnemyTexture.getSize().x / pistolFrameCount;
+        currentEnemyHeight = (float)pistolEnemyTexture.getSize().y;
+        shape.setSize({ currentEnemyWidth, currentEnemyHeight });
+        shape.setTextureRect({ 0,0,(int)currentEnemyWidth,(int)currentEnemyHeight });
+        shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
+    }
+    else if (type == SHOTGUN) { // Ładowanie tekstury dla SHOTGUN
+        if (shotgunEnemyTexture.getSize().x == 0) {
+            if (!shotgunEnemyTexture.loadFromFile("enemy2.png")) // Upewnij się, że nazwa pliku jest poprawna
+                cerr << "enemy2.png missing\n";
+        }
+        shape.setTexture(&shotgunEnemyTexture);
+        currentEnemyWidth = (float)shotgunEnemyTexture.getSize().x / shotgunFrameCount;
+        currentEnemyHeight = (float)shotgunEnemyTexture.getSize().y;
+        shape.setSize({ currentEnemyWidth, currentEnemyHeight });
+        shape.setTextureRect({ 0,0,(int)currentEnemyWidth,(int)currentEnemyHeight });
+        shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
+    }
+    else { // Dla BOSS (domyślne wartości 40x40)
+        currentEnemyWidth = 40.f;
+        currentEnemyHeight = 40.f;
+        shape.setSize({ currentEnemyWidth, currentEnemyHeight });
+        shape.setFillColor(Color(139, 69, 19));
+        shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
+    }
+
+    shape.setPosition(x, y - currentEnemyHeight / 2.f);
+
+    shootCooldown = (type == PISTOL ? 0.8f : (type == SHOTGUN ? 1.5f : 0.5f)); // Dostosuj cooldown dla Shotguna
     shootClock.restart();
+    pistolAnimClock.restart();
+    shotgunAnimClock.restart(); // Uruchomienie zegara animacji dla SHOTGUN
 }
+
 void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::Sound& snd) {
     if (type == BOSS) {
         bossCenter = sf::Vector2f(1000, 500);
         bossRadius = 300;
-        bossTime += 0.1f; // prędkość
-        // Ruch po znaku nieskończoności
+        bossTime += 0.1f;
         float t = bossTime * 0.5f;
         float a = bossRadius;
         float x = a * std::sin(t) / (1 + std::pow(std::cos(t), 2));
         float y = a * std::sin(t) * std::cos(t) / (1 + std::pow(std::cos(t), 2));
         shape.setPosition(bossCenter.x + x, bossCenter.y + y);
-        // szczelanko
         if (shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
             shootBossAttack(pl);
             snd.play();
@@ -175,33 +235,120 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
     if (!alive) return;
     bool onPlat = false; const Platform* base = nullptr;
     auto eB = shape.getGlobalBounds();
+    float currentEnemyHeight = shape.getSize().y;
+
     for (auto* p : plats) {
         auto pB = p->shape.getGlobalBounds();
-        float eBot = eB.top + eB.height;
-        if (abs(eBot - pB.top) < 5.f &&
-            eB.left + eB.width > pB.left + 2 &&
-            eB.left < pB.left + pB.width - 2)
+        if (abs((eB.top + eB.height) - pB.top) < 5.f &&
+            eB.left < pB.left + pB.width &&
+            eB.left + eB.width > pB.left)
         {
-            onPlat = true; base = p;
-            shape.setPosition(eB.left, pB.top - eB.height);
+            onPlat = true;
+            base = p;
+            shape.setPosition(shape.getPosition().x, pB.top - currentEnemyHeight / 2.f);
             break;
         }
     }
     if (!onPlat) shape.move(0, GRAVITY);
 
-    auto eC = shape.getPosition() + shape.getSize() / 2.f;
+    auto eC = shape.getPosition();
     auto pC = pl.shape.getPosition();
     float dx = pC.x - eC.x, dy = pC.y - eC.y;
     float dist = sqrt(dx * dx + dy * dy);
     bool see = canSeePlayer(pl, plats) && dist < detectionRange;
 
+    // Animacja dla wroga PISTOL i SHOTGUN
+    if (type == PISTOL || type == SHOTGUN) {
+        sf::Texture* currentTexture = nullptr;
+        int* currentFramePtr = nullptr;
+        int frameCountVal = 0;
+        float timePerFrameVal = 0;
+        sf::Clock* animClockPtr = nullptr;
+
+        if (type == PISTOL) {
+            currentTexture = &pistolEnemyTexture;
+            currentFramePtr = &currentPistolFrame;
+            frameCountVal = pistolFrameCount;
+            timePerFrameVal = pistolTimePerFrame;
+            animClockPtr = &pistolAnimClock;
+        }
+        else if (type == SHOTGUN) {
+            currentTexture = &shotgunEnemyTexture;
+            currentFramePtr = &currentShotgunFrame;
+            frameCountVal = shotgunFrameCount;
+            timePerFrameVal = shotgunTimePerFrame;
+            animClockPtr = &shotgunAnimClock;
+        }
+
+        if (currentTexture && animClockPtr) {
+            if (abs(speed) > 0.01f || state == Chase) {
+                if (animClockPtr->getElapsedTime().asSeconds() > timePerFrameVal) {
+                    animClockPtr->restart();
+                    *currentFramePtr = (*currentFramePtr + 1) % frameCountVal;
+                    int fw = currentTexture->getSize().x / frameCountVal;
+                    int fh = currentTexture->getSize().y;
+                    shape.setTextureRect({ (*currentFramePtr) * fw, 0, fw, fh });
+                }
+            }
+            else {
+                int fw = currentTexture->getSize().x / frameCountVal;
+                int fh = currentTexture->getSize().y;
+                shape.setTextureRect({ 0, 0, fw, fh });
+                *currentFramePtr = 0;
+            }
+
+            // Logika obracania sprite'a
+            if (state == Patrol) {
+                if (speed < 0) {
+                    shape.setScale(-1.f, 1.f);
+                }
+                else if (speed > 0) {
+                    shape.setScale(1.f, 1.f);
+                }
+            }
+            else if (state == Chase || state == Attack) {
+                if (dx < 0) {
+                    shape.setScale(-1.f, 1.f);
+                }
+                else if (dx > 0) {
+                    shape.setScale(1.f, 1.f);
+                }
+            }
+            else if (state == Retreat) {
+                if (dx < 0) { // Gracz na lewo, wróg ucieka w prawo
+                    shape.setScale(1.f, 1.f);
+                }
+                else if (dx > 0) { // Gracz na prawo, wróg ucieka w lewo
+                    shape.setScale(-1.f, 1.f);
+                }
+            }
+        }
+    }
+
+
     switch (state) {
     case Patrol:
         if (onPlat) {
             auto pB = base->shape.getGlobalBounds();
-            float nx = shape.getPosition().x + speed;
-            if (nx<pB.left || nx + eB.width>pB.left + pB.width) speed = -speed;
-            else shape.move(speed, 0);
+            float currentShapeLeft = shape.getPosition().x - shape.getOrigin().x;
+            float currentShapeRight = shape.getPosition().x - shape.getOrigin().x + shape.getSize().x;
+
+            if (speed > 0) {
+                if (currentShapeRight + speed > pB.left + pB.width - 2) {
+                    speed = -speed;
+                }
+                else {
+                    shape.move(speed, 0);
+                }
+            }
+            else {
+                if (currentShapeLeft + speed < pB.left + 2) {
+                    speed = -speed;
+                }
+                else {
+                    shape.move(speed, 0);
+                }
+            }
         }
         if (see) state = Chase;
         break;
@@ -215,7 +362,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
         if (hp < retreatThreshold) { state = Retreat; break; }
         if (shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
             if (type == PISTOL) shootPistol(pl);
-            else          shootShotgun(pl);
+            else        shootShotgun(pl);
             snd.play();
             shootClock.restart();
         }
@@ -228,14 +375,14 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
     for (auto& b : bullets) b.update();
 }
 void Enemy::shootPistol(const Player& pl) {
-    auto e = shape.getPosition() + shape.getSize() / 2.f;
+    auto e = shape.getPosition();
     auto p = pl.shape.getPosition();
     float dx = p.x - e.x, dy = p.y - e.y;
     float len = sqrt(dx * dx + dy * dy);
     if (len > 0) bullets.emplace_back(e.x, e.y, dx / len * 5.f, dy / len * 5.f);
 }
 void Enemy::shootShotgun(const Player& pl) {
-    auto e = shape.getPosition() + shape.getSize() / 2.f;
+    auto e = shape.getPosition();
     auto p = pl.shape.getPosition();
     float baseAng = atan2(p.y - e.y, p.x - e.x);
     const int pellets = 5;
@@ -246,7 +393,7 @@ void Enemy::shootShotgun(const Player& pl) {
     }
 }
 void Enemy::shootBossAttack(const Player& pl) {
-    auto e = shape.getPosition() + shape.getSize() / 2.f;
+    auto e = shape.getPosition();
     auto p = pl.shape.getPosition();
     float dx = p.x - e.x, dy = p.y - e.y;
     float len = sqrt(dx * dx + dy * dy);
@@ -265,7 +412,7 @@ void Enemy::takeDamage(int amt) {
 bool Enemy::canSeePlayer(const Player& pl,
     const vector<Platform*>& plats)
 {
-    auto E = shape.getPosition() + shape.getSize() / 2.f;
+    auto E = shape.getPosition();
     auto P = pl.shape.getPosition();
     auto dir = P - E; float len = sqrt(dir.x * dir.x + dir.y * dir.y);
     if (len == 0) return true;
@@ -282,20 +429,32 @@ bool Enemy::canSeePlayer(const Player& pl,
 
 // --- Hazard ---
 Hazard::Hazard(float x, float y, float w, float h) {
+    if (texture.getSize().x == 0) { // Sprawdź, czy tekstura jest już załadowana
+        if (!texture.loadFromFile("lava.png")) {
+            cerr << "ERROR: lava.png missing or could not be loaded! Please ensure it's in the same directory as the executable.\n";
+        }
+        else {
+            cerr << "SUCCESS: lava.png loaded. Size: " << texture.getSize().x << "x" << texture.getSize().y << "\n";
+            texture.setRepeated(true);  // Ustawienie powtarzania
+            texture.setSmooth(false);   // Wyłączenie wygładzania dla pikselowej tekstury
+        }
+    }
+    shape.setTexture(&texture); // Ustaw teksturę
     shape.setSize({ w,h });
-    shape.setFillColor(Color::Red);
+    shape.setTextureRect(sf::IntRect(0, 0, (int)w, (int)h));
     shape.setPosition(x, y);
     damageClock.restart();
 }
 void Hazard::update(Player& p) {
-    if (shape.getGlobalBounds().intersects(p.shape.getGlobalBounds())) {
+    // Używamy getCollisionBounds() gracza do detekcji kolizji
+    if (shape.getGlobalBounds().intersects(p.getCollisionBounds())) {
         if (damageClock.getElapsedTime().asSeconds() >= 1.f) {
             p.takeDamage(10);
-            damageClock.restart(); // Używa damageClock z klasy Hazard
+            damageClock.restart();
         }
     }
     else {
-        damageClock.restart(); // Używa damageClock z klasy Hazard
+        damageClock.restart();
     }
 }
 
@@ -333,7 +492,8 @@ Alcohol::Alcohol(AlcoholType t, float x, float y) : type(t) {
 
 void Player::pickUpAlcohol(std::vector<Alcohol>& drinks) {
     for (auto& a : drinks) {
-        if (!a.picked && shape.getGlobalBounds().intersects(a.shape.getGlobalBounds())) {
+        // Używamy getCollisionBounds() gracza do detekcji kolizji
+        if (!a.picked && getCollisionBounds().intersects(a.shape.getGlobalBounds())) {
             alcoholInventory[a.type]++;
             a.picked = true;
             std::cout << "Picked up alcohol type: " << static_cast<int>(a.type) << "\n";
