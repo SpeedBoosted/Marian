@@ -1,12 +1,11 @@
-// klasy.h
-#pragma once
+﻿#pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <vector>
 #include <map>
 #include <string>
 
-class Player;  // forward
+class Player; // deklaracja wyprzedzająca
 
 class Platform {
 public:
@@ -28,12 +27,13 @@ public:
 class Bullet {
 public:
     sf::RectangleShape shape;
-    sf::Vector2f      velocity;
-    bool              active;
+    sf::Vector2f         velocity;
+    bool                 active;
     int damage = 10;
     Bullet(float x, float y, float vx, float vy);
     void update();
 };
+
 enum class AlcoholType { Piwo, Wodka, Kubus, Wino };
 
 class Alcohol {
@@ -42,14 +42,19 @@ public:
     AlcoholType type;
     sf::RectangleShape shape;
     bool picked = false;
+
+    static sf::Texture beerTexture;
+    static sf::Texture wodkaTexture;
+    static sf::Texture kubusTexture;
+    static sf::Texture wineTexture;
 };
 
 class Player {
 public:
     sf::RectangleShape shape, hpBar;
-    sf::Vector2f      velocity;
-    bool               onGround;
-    int                hp;
+    sf::Vector2f         velocity;
+    bool                 onGround;
+    int                  hp;
     std::vector<Bullet> bullets;
 
     static sf::Texture runTexture;
@@ -57,6 +62,8 @@ public:
     float  timePerFrame = 0.08f;
     int    currentFrame = 0;
     sf::Clock animClock;
+    sf::Clock damageClock;
+    sf::Clock shootClock;
 
     Player(float x = 0, float y = 0);
     void update(const std::vector<Platform*>& plats);
@@ -66,10 +73,10 @@ public:
     void shoot(const sf::Vector2f& tgt);
     std::map<AlcoholType, int> alcoholInventory;
     AlcoholType selectedAlcohol = AlcoholType::Piwo;
-    float jumpBoost = 0;
-    float speedBoost = 1;
-    float damageBoost = 1;
-    float cooldownPenalty = 1;
+    float jumpBoost = 0.f;
+    float speedBoost = 1.f;
+    float damageBoost = 1.f;
+    float cooldownPenalty = 1.f;
 
     void pickUpAlcohol(std::vector<Alcohol>& drinks);
     void useAlcohol();
@@ -83,22 +90,34 @@ public:
     enum Type { PISTOL, SHOTGUN, BOSS };
     enum State { Patrol, Chase, Attack, Retreat };
 
-    sf::RectangleShape   shape;
+    sf::RectangleShape    shape;
     int hits = 0;
-    float                speed;
-    bool                 alive;
-    int                  hp;
-    Type                 type;
-    State                state;
-    float                detectionRange;
-    int                  retreatThreshold;
-    int                  chaseThreshold;
-    float                shootCooldown;
-    sf::Clock            shootClock;
-    std::vector<Bullet>  bullets;
-    float bossTime = 0.f; // tylko dla bossa te 3 som
+    float                 speed;
+    bool                  alive;
+    int                   hp;
+    Type                  type;
+    State                 state;
+    float                 detectionRange;
+    int                   retreatThreshold;
+    int                   chaseThreshold;
+    float                 shootCooldown;
+    sf::Clock             shootClock;
+    std::vector<Bullet>   bullets;
+    float bossTime = 0.f;
     sf::Vector2f bossCenter;
     float bossRadius = 120.f;
+
+    static sf::Texture pistolEnemyTexture;
+    int pistolFrameCount = 10;
+    float pistolTimePerFrame = 0.1f;
+    int currentPistolFrame = 0;
+    sf::Clock pistolAnimClock;
+
+    static sf::Texture shotgunEnemyTexture;
+    int shotgunFrameCount = 10;
+    float shotgunTimePerFrame = 0.1f;
+    int currentShotgunFrame = 0;
+    sf::Clock shotgunAnimClock;
 
     Enemy(float x = 0, float y = 0, Type t = PISTOL);
     void update(const std::vector<Platform*>& plats,
@@ -117,8 +136,11 @@ private:
 class Hazard {
 public:
     sf::RectangleShape shape;
+    static sf::Texture  texture;
     Hazard(float x, float y, float w, float h);
     void update(Player& p);
+    sf::Clock animClock;
+    int animOffsetX = 0;
 
 private:
     sf::Clock damageClock;
@@ -126,10 +148,10 @@ private:
 
 class Menu {
 public:
-    sf::Font   font;
-    sf::Text   t1, t2, t3, t4, t5;
-    bool       inMenu;
-    int        selectedLevel;
+    sf::Font    font;
+    sf::Text    t1, t2, t3, t4, t5;
+    bool        inMenu;
+    int         selectedLevel;
     sf::Texture bgTexture;
     sf::Sprite  bgSprite;
 

@@ -1,35 +1,3 @@
 ﻿  apkatest.cpp
-C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(181,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
-C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(182,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244: "argument": konwersja z "_Ty" do "float", możliwa utrata danych
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:         with
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:         [
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:             _Ty=int
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:         ]
-  (kompilowanie pliku źródłowego „apkatest.cpp”)
-      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103):
-      kontekst tworzenia wystąpienia szablonu (najpierw najstarszy) to
-          C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(141,25):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „void std::vector<Enemy,std::allocator<Enemy>>::emplace_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\vector(858,24):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_one_at_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-          with
-          [
-              _Ty=Enemy
-          ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\vector(776,20):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_back_with_unused_capacity<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-          with
-          [
-              _Ty=Enemy
-          ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\vector(794,27):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „void std::_Default_allocator_traits<_Alloc>::construct<_Ty,int,int,Enemy::Type>(_Alloc &,_Objty *const ,int &&,int &&,Enemy::Type &&)” funkcji szablon
-          with
-          [
-              _Alloc=std::allocator<Enemy>,
-              _Ty=Enemy,
-              _Objty=Enemy
-          ]
-  
+C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(372,29): warning C4018: ">": niezgodność typu ze znakiem/bez znaku
   apkatest.vcxproj -> C:\ProjektMarian\Marianaa\x64\Debug\apkatest.exe
