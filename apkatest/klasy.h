@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-class Player; // forward
+class Player; // deklaracja wyprzedzająca
 
 class Platform {
 public:
@@ -43,7 +43,6 @@ public:
     sf::RectangleShape shape;
     bool picked = false;
 
-    // Statyczne tekstury dla każdego typu alkoholu
     static sf::Texture beerTexture;
     static sf::Texture wodkaTexture;
     static sf::Texture kubusTexture;
@@ -63,7 +62,8 @@ public:
     float  timePerFrame = 0.08f;
     int    currentFrame = 0;
     sf::Clock animClock;
-    sf::Clock damageClock; // Dodany clock do obsługi hazardów
+    sf::Clock damageClock;
+    sf::Clock shootClock;
 
     Player(float x = 0, float y = 0);
     void update(const std::vector<Platform*>& plats);
@@ -73,10 +73,10 @@ public:
     void shoot(const sf::Vector2f& tgt);
     std::map<AlcoholType, int> alcoholInventory;
     AlcoholType selectedAlcohol = AlcoholType::Piwo;
-    float jumpBoost = 0;
-    float speedBoost = 1;
-    float damageBoost = 1;
-    float cooldownPenalty = 1;
+    float jumpBoost = 0.f;
+    float speedBoost = 1.f;
+    float damageBoost = 1.f;
+    float cooldownPenalty = 1.f;
 
     void pickUpAlcohol(std::vector<Alcohol>& drinks);
     void useAlcohol();
@@ -103,21 +103,19 @@ public:
     float                 shootCooldown;
     sf::Clock             shootClock;
     std::vector<Bullet>   bullets;
-    float bossTime = 0.f; // tylko dla bossa te 3 som
+    float bossTime = 0.f;
     sf::Vector2f bossCenter;
     float bossRadius = 120.f;
 
-    // Nowe zmienne dla animacji wroga PISTOL
-    static sf::Texture pistolEnemyTexture; 
-    int pistolFrameCount = 10; 
-    float pistolTimePerFrame = 0.1f; 
+    static sf::Texture pistolEnemyTexture;
+    int pistolFrameCount = 10;
+    float pistolTimePerFrame = 0.1f;
     int currentPistolFrame = 0;
     sf::Clock pistolAnimClock;
 
- 
-    static sf::Texture shotgunEnemyTexture; 
-    int shotgunFrameCount = 10; 
-    float shotgunTimePerFrame = 0.1f; // Czas na klatkę (dostosuj)
+    static sf::Texture shotgunEnemyTexture;
+    int shotgunFrameCount = 10;
+    float shotgunTimePerFrame = 0.1f;
     int currentShotgunFrame = 0;
     sf::Clock shotgunAnimClock;
 
@@ -138,7 +136,7 @@ private:
 class Hazard {
 public:
     sf::RectangleShape shape;
-    static sf::Texture  texture; // Dodano statyczną teksturę
+    static sf::Texture  texture;
     Hazard(float x, float y, float w, float h);
     void update(Player& p);
 

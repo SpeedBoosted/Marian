@@ -16,18 +16,15 @@ int main()
 {
     std::srand((unsigned)std::time(nullptr));
 
-
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 0; 
+    settings.antialiasingLevel = 0;
 
-
-    // Przekazanie ustawień kontekstu do konstruktora okna
     RenderWindow window(VideoMode(800, 600), "Marian", sf::Style::Default, settings);
     window.setFramerateLimit(60);
 
-    View view(Vector2f(400, 300), Vector2f(800, 600));
+    View view(Vector2f(400.f, 300.f), Vector2f(800.f, 600.f));
 
-    // tło
+    // Tło
     Texture bgTex;
     if (!bgTex.loadFromFile("background.png"))
         std::cerr << "background.png missing\n";
@@ -35,7 +32,7 @@ int main()
 
     std::vector<Alcohol> drinks;
 
-    // dźwięki
+    // Dźwięki
     SoundBuffer jb, sb, pb, shb, bb;
     jb.loadFromFile("jump.wav");
     sb.loadFromFile("shoot.wav");
@@ -59,20 +56,20 @@ int main()
 
     std::function<void(int)> loadLevel;
 
-    // GameOver
+    // Ekran GameOver
     Font font; font.loadFromFile("arial.ttf");
     Text gameOverText("Rip BOZO!\nPress any key...", font, 40);
     gameOverText.setFillColor(Color::Red);
-    gameOverText.setPosition(200, 250);
+    gameOverText.setPosition(200.f, 250.f);
 
     Texture gameOverTex;
     if (!gameOverTex.loadFromFile("game_over.png"))
         std::cerr << "game_over.png missing\n";
     Sprite gameOverSprite(gameOverTex);
     gameOverSprite.setOrigin(gameOverTex.getSize().x / 2.f, gameOverTex.getSize().y / 2.f);
-    gameOverSprite.setPosition(400, 300);
+    gameOverSprite.setPosition(400.f, 300.f);
 
-    // Napisy
+    // Napisy końcowe
     sf::Music endingMusic;
     if (!endingMusic.openFromFile("ending.wav"))
         std::cerr << "ending.wav missing\n";
@@ -82,10 +79,10 @@ int main()
         std::cerr << "logo.png missing\n";
     Sprite logoSprite(logoTex);
     logoSprite.setOrigin(logoTex.getSize().x / 2.f, logoTex.getSize().y / 2.f);
-    logoSprite.setPosition(400, 120);
+    logoSprite.setPosition(400.f, 120.f);
     bool inCredits = false;
     float creditsY = 600.f;
-    const float creditsSpeed = 50.f; // px/s
+    const float creditsSpeed = 50.f;
     std::vector<std::string> creditsLines = {
         "Autorzy:","Jan Dymek","Mikolaj Fraszczak",
         "",
@@ -112,7 +109,7 @@ int main()
         std::cerr << "door.png missing\n";
     Sprite doorSprite;
 
-    // stan gry
+    // Stan gry
     Menu menu;
     Player player;
     vector<Platform*> platforms;
@@ -125,7 +122,7 @@ int main()
     bool wallActive = false;
     sf::Clock wallClock;
     float wallSpeed = 0.f;
-    // muzowanie
+    // Lambda funkcja do odtwarzania muzyki
     auto playMusic = [&](sf::Music& music) {
         menuMusic.stop();
         level1Music.stop();
@@ -133,28 +130,29 @@ int main()
         level3Music.stop();
         music.play();
         };
-    // loader poziomów
+    // Lambda funkcja do ładowania poziomów
     loadLevel = [&](int lvl)
         {
+            // Czyszczenie poprzedniego poziomu
             for (auto* p : platforms) delete p;
             platforms.clear();
             enemies.clear();
             hazards.clear();
             drinks.clear();
 
+            // Definicje poziomów
             switch (lvl)
             {
             case 1:
                 levelWidth = 1800.f;
-                player = Player(50, 500);
+                player = Player(50.f, 500.f);
                 player.resetAlcoholEffects();
-                platforms.push_back(new Platform(0, 550, levelWidth, 50));
-                platforms.push_back(new Platform(300, 450, 150, 20));
-                platforms.push_back(new MovingPlatform(700, 350, 120, 20, { 1.2f,0 }, 120));
-                platforms.push_back(new Platform(1100, 300, 100, 20));
-                // Poprawiona pozycja startowa dla wroga (Y = górna krawędź platformy)
-                enemies.emplace_back(400, 550, Enemy::PISTOL); // Na głównej platformie
-                hazards.emplace_back(500, 530, 100, 20);
+                platforms.push_back(new Platform(0.f, 550.f, levelWidth, 50.f));
+                platforms.push_back(new Platform(300.f, 450.f, 150.f, 20.f));
+                platforms.push_back(new MovingPlatform(700.f, 350.f, 120.f, 20.f, { 1.2f,0.f }, 120.f));
+                platforms.push_back(new Platform(1100.f, 300.f, 100.f, 20.f));
+                enemies.emplace_back(400.f, 550.f, Enemy::PISTOL);
+                hazards.emplace_back(500.f, 530.f, 100.f, 20.f);
                 drinks.emplace_back(Alcohol(AlcoholType::Piwo, 200.f, 520.f));
                 drinks.emplace_back(Alcohol(AlcoholType::Wodka, 250.f, 520.f));
                 drinks.emplace_back(Alcohol(AlcoholType::Kubus, 300.f, 520.f));
@@ -166,66 +164,65 @@ int main()
 
             case 2:
                 levelWidth = 2400.f;
-                player = Player(50, 500);
-                platforms.push_back(new Platform(0, 550, levelWidth, 50));
-                platforms.push_back(new Platform(200, 480, 100, 20));
-                platforms.push_back(new MovingPlatform(500, 400, 120, 20, { -1.5f,0 }, 200));
-                platforms.push_back(new MovingPlatform(900, 300, 100, 20, { 0,1.8f }, 150));
-                platforms.push_back(new Platform(1400, 380, 150, 20));
-                platforms.push_back(new Platform(1800, 310, 120, 20));
-                // Poprawione pozycje startowe
-                enemies.emplace_back(600, 550, Enemy::PISTOL); // Na głównej platformie
-                enemies.emplace_back(1800 + 120 / 2, 310, Enemy::SHOTGUN); // Na platformie (1800, 310)
+                player = Player(50.f, 500.f);
+                platforms.push_back(new Platform(0.f, 550.f, levelWidth, 50.f));
+                platforms.push_back(new Platform(200.f, 480.f, 100.f, 20.f));
+                platforms.push_back(new MovingPlatform(500.f, 400.f, 120.f, 20.f, { -1.5f,0.f }, 200.f));
+                platforms.push_back(new MovingPlatform(900.f, 300.f, 100.f, 20.f, { 0.f,1.8f }, 150.f));
+                platforms.push_back(new Platform(1400.f, 380.f, 150.f, 20.f));
+                platforms.push_back(new Platform(1800.f, 310.f, 120.f, 20.f));
+                enemies.emplace_back(600.f, 550.f, Enemy::PISTOL);
+                enemies.emplace_back(1800.f + 120.f / 2.f, 310.f, Enemy::SHOTGUN);
                 for (auto& e : enemies) {
-                    e.detectionRange = 550;
+                    e.detectionRange = 550.f;
                     e.shootCooldown = (e.type == Enemy::PISTOL ? 0.6f : 1.2f);
                     e.speed *= 1.2f;
                 }
-                hazards.emplace_back(800, 530, 150, 20);
-                hazards.emplace_back(1300, 530, 200, 20);
+                hazards.emplace_back(800.f, 530.f, 150.f, 20.f);
+                hazards.emplace_back(1300.f, 530.f, 200.f, 20.f);
                 playMusic(level2Music);
                 wallActive = false;
                 break;
 
             case 3:
                 levelWidth = 3200.f;
-                player = Player(50, 500);
-                platforms.push_back(new Platform(0, 550, levelWidth, 50));
+                player = Player(50.f, 500.f);
+                platforms.push_back(new Platform(0.f, 550.f, levelWidth, 50.f));
                 for (int i = 0; i < 6; ++i) {
-                    float x = 300 + 450 * i;
-                    float y = 450 - (i % 2) * 80;
-                    platforms.push_back(new Platform(x, y, 120, 20));
-                    platforms.push_back(new MovingPlatform(x + 200, y - 100, 100, 20, { 0,2.5f }, 120));
+                    float x = 300.f + 450.f * i;
+                    float y = 450.f - (i % 2) * 80.f;
+                    platforms.push_back(new Platform(x, y, 120.f, 20.f));
+                    platforms.push_back(new MovingPlatform(x + 200.f, y - 100.f, 100.f, 20.f, { 0.f,2.5f }, 120.f));
                 }
-                platforms.push_back(new Platform(1500, 200, 50, 350));
-                platforms.push_back(new Platform(2100, 350, 50, 200));
+                platforms.push_back(new Platform(1500.f, 200.f, 50.f, 350.f));
+                platforms.push_back(new Platform(2100.f, 350.f, 50.f, 200.f));
                 for (int i = 0; i < 3; ++i)
-                    enemies.emplace_back(700 + 600 * i, 550 - (i % 2) * 200, (i % 2 ? Enemy::SHOTGUN : Enemy::PISTOL)); // 550 to podstawa
+                    enemies.emplace_back(700.f + 600.f * i, 550.f - (i % 2) * 200.f, (i % 2 ? Enemy::SHOTGUN : Enemy::PISTOL));
                 for (auto& e : enemies) {
-                    e.detectionRange = 650;
+                    e.detectionRange = 650.f;
                     e.shootCooldown = (e.type == Enemy::PISTOL ? 0.5f : 1.0f);
                     e.speed *= 1.4f;
                     e.retreatThreshold = 40;
                     e.chaseThreshold = 70;
                 }
                 for (int i = 0; i < 4; ++i)
-                    hazards.emplace_back(900 + 500 * i, 530, 120, 20);
+                    hazards.emplace_back(900.f + 500.f * i, 530.f, 120.f, 20.f);
                 playMusic(level1Music);
                 wallActive = false;
                 break;
 
             case 4: {
                 levelWidth = 1600.f;
-                player = Player(50, 500);
-                platforms.push_back(new Platform(0, 550, 300, 50));
-                platforms.push_back(new Platform(500, 550, 300, 50));
-                platforms.push_back(new Platform(900, 550, 250, 50));
-                platforms.push_back(new Platform(1250, 550, 350, 50));
-                platforms.push_back(new Platform(300, 450, 100, 20));
-                platforms.push_back(new Platform(650, 400, 100, 20));
-                platforms.push_back(new Platform(1000, 450, 100, 20));
-                enemies.emplace_back(600, 550, Enemy::SHOTGUN);
-                enemies.emplace_back(950, 550, Enemy::SHOTGUN);
+                player = Player(50.f, 500.f);
+                platforms.push_back(new Platform(0.f, 550.f, 300.f, 50.f));
+                platforms.push_back(new Platform(500.f, 550.f, 300.f, 50.f));
+                platforms.push_back(new Platform(900.f, 550.f, 250.f, 50.f));
+                platforms.push_back(new Platform(1250.f, 550.f, 350.f, 50.f));
+                platforms.push_back(new Platform(300.f, 450.f, 100.f, 20.f));
+                platforms.push_back(new Platform(650.f, 400.f, 100.f, 20.f));
+                platforms.push_back(new Platform(1000.f, 450.f, 100.f, 20.f));
+                enemies.emplace_back(600.f, 550.f, Enemy::SHOTGUN);
+                enemies.emplace_back(950.f, 550.f, Enemy::SHOTGUN);
                 float bossX = 1400.f;
                 float bossY = 550.f;
                 enemies.emplace_back(bossX, bossY, Enemy::BOSS);
@@ -235,61 +232,62 @@ int main()
             }
             case 5: {
                 levelWidth = 2500.f;
-                player = Player(50, 500);
-                giantWall.setSize(Vector2f(60, 600));
+                player = Player(50.f, 500.f);
+                giantWall.setSize(Vector2f(60.f, 600.f));
                 giantWall.setFillColor(Color(120, 120, 120));
-                giantWall.setPosition(0, 0);
+                giantWall.setPosition(0.f, 0.f);
                 wallActive = true;
                 wallSpeed = 200.f;
                 wallClock.restart();
-                platforms.push_back(new Platform(0, 550, levelWidth, 50));
-                platforms.push_back(new Platform(400, 480, 150, 20));
-                platforms.push_back(new MovingPlatform(700, 400, 120, 20, { 0, -1.5f }, 100));
-                platforms.push_back(new Platform(850, 300, 30, 250));
-                platforms.push_back(new Platform(1100, 470, 180, 20));
-                platforms.push_back(new MovingPlatform(1400, 370, 100, 20, { -2.0f, 0 }, 200));
-                platforms.push_back(new Platform(1700, 320, 150, 20));
-                platforms.push_back(new Platform(1650, 250, 30, 300));
-                platforms.push_back(new MovingPlatform(1950, 250, 100, 20, { 0, 2.0f }, 120));
-                platforms.push_back(new Platform(2150, 350, 120, 20));
-                platforms.push_back(new Platform(2350, 450, 100, 20));
-                platforms.push_back(new Platform(2250, 220, 30, 330));
+                platforms.push_back(new Platform(0.f, 550.f, levelWidth, 50.f));
+                platforms.push_back(new Platform(400.f, 480.f, 150.f, 20.f));
+                platforms.push_back(new MovingPlatform(700.f, 400.f, 120.f, 20.f, { 0.f, -1.5f }, 100.f));
+                platforms.push_back(new Platform(850.f, 300.f, 30.f, 250.f));
+                platforms.push_back(new Platform(1100.f, 470.f, 180.f, 20.f));
+                platforms.push_back(new MovingPlatform(1400.f, 370.f, 100.f, 20.f, { -2.0f, 0.f }, 200.f));
+                platforms.push_back(new Platform(1700.f, 320.f, 150.f, 20.f));
+                platforms.push_back(new Platform(1650.f, 250.f, 30.f, 300.f));
+                platforms.push_back(new MovingPlatform(1950.f, 250.f, 100.f, 20.f, { 0.f, 2.0f }, 120.f));
+                platforms.push_back(new Platform(2150.f, 350.f, 120.f, 20.f));
+                platforms.push_back(new Platform(2350.f, 450.f, 100.f, 20.f));
+                platforms.push_back(new Platform(2250.f, 220.f, 30.f, 330.f));
                 playMusic(level3Music);
                 break;
             }
 
             }
 
-            // kafelkowanie tła
+            // Kafelkowanie tła
             bgTiles.clear();
             int tw = bgTex.getSize().x, th = bgTex.getSize().y;
-            float sy = (600.f / float(th)) * 2.0f;
-            float tileW = tw * sy;
-            int cnt = int(std::ceil(levelWidth / tileW));
+            float sy = (600.f / static_cast<float>(th)) * 2.0f;
+            float tileW = static_cast<float>(tw) * sy;
+            int cnt = static_cast<int>(std::ceil(levelWidth / tileW));
             for (int i = 0; i < cnt; i++) {
                 Sprite s(bgTex);
                 s.setScale(sy, sy);
-                s.setPosition(i * tileW, 0);
+                s.setPosition(static_cast<float>(i) * tileW, 0.f);
                 bgTiles.push_back(s);
             }
 
+            // Ustawienie drzwi na końcu poziomu
             doorSprite.setTexture(doorTex);
             doorSprite.setScale(0.1f, 0.1f);
             float groundY = 510.f;
             Vector2f doorTexSize = Vector2f(
-                doorTex.getSize().x * doorSprite.getScale().x,
-                doorTex.getSize().y * doorSprite.getScale().y
+                static_cast<float>(doorTex.getSize().x) * doorSprite.getScale().x,
+                static_cast<float>(doorTex.getSize().y) * doorSprite.getScale().y
             );
             doorSprite.setPosition(levelWidth - doorTexSize.x, groundY - doorTexSize.y);
             isGameOver = isWin = false;
         };
 
 
-    // pętla gry
+    // Główna pętla gry
     while (window.isOpen())
     {
         float deltaTime = frameClock.restart().asSeconds();
-        // napisy
+        // Obsługa napisów końcowych
         if (inCredits) {
             if (endingMusic.getStatus() != sf::Music::Playing)
                 playMusic(endingMusic);
@@ -300,13 +298,11 @@ int main()
             for (const auto& line : creditsLines)
                 allLines += line + "\n";
             creditsText.setString(allLines);
-            // Wyśrodkuj logo
             float logoY = creditsY;
-            logoSprite.setPosition(400, logoY + logoTex.getSize().y / 2.f);
-            // tekst
-            float textStartY = logoY + logoTex.getSize().y + 20.f;
+            logoSprite.setPosition(400.f, logoY + static_cast<float>(logoTex.getSize().y) / 2.f);
+            float textStartY = logoY + static_cast<float>(logoTex.getSize().y) + 20.f;
             creditsText.setPosition(
-                400 - creditsText.getLocalBounds().width / 2.f,
+                400.f - creditsText.getLocalBounds().width / 2.f,
                 textStartY
             );
             creditsY -= creditsSpeed * deltaTime;
@@ -315,8 +311,7 @@ int main()
             window.draw(creditsText);
             window.display();
 
-            // wróć do menu
-            if (textStartY + creditsText.getLocalBounds().height < 0) {
+            if (textStartY + creditsText.getLocalBounds().height < 0.f) {
                 inCredits = false;
                 menu.inMenu = true;
                 playMusic(menuMusic);
@@ -324,6 +319,7 @@ int main()
             continue;
         }
         Event ev;
+        // Obsługa zdarzeń
         while (window.pollEvent(ev)) {
             if (ev.type == Event::Closed) window.close();
             if (isGameOver && ev.type == Event::KeyPressed) {
@@ -341,6 +337,7 @@ int main()
                 menu.inMenu = true;
                 playMusic(menuMusic);
             }
+            // Skok gracza
             if (!menu.inMenu && !isGameOver && !isWin
                 && ev.type == Event::KeyPressed
                 && ev.key.code == Keyboard::Space
@@ -348,6 +345,7 @@ int main()
                 player.jump();
                 jumpSound.play();
             }
+            // Strzał gracza
             if (!menu.inMenu && !isGameOver && !isWin
                 && ev.type == Event::MouseButtonPressed
                 && ev.mouseButton.button == Mouse::Left) {
@@ -360,6 +358,7 @@ int main()
 
         for (auto* p : platforms) p->update();
 
+        // Logika menu
         if (menu.inMenu) {
             if (menuMusic.getStatus() != sf::Music::Playing)
                 playMusic(menuMusic);
@@ -369,30 +368,35 @@ int main()
             window.display();
             continue;
         }
+        // Ładowanie nowego poziomu
         if (currentLevel != menu.selectedLevel) {
             loadLevel(menu.selectedLevel);
             currentLevel = menu.selectedLevel;
         }
 
+        // Logika gry
         if (!isGameOver && !isWin) {
-            if (Keyboard::isKeyPressed(Keyboard::A)) player.move(-4.f);
-            if (Keyboard::isKeyPressed(Keyboard::D)) player.move(4.f);
+            if (Keyboard::isKeyPressed(Keyboard::A)) player.move(-4.f * player.speedBoost);
+            if (Keyboard::isKeyPressed(Keyboard::D)) player.move(4.f * player.speedBoost);
             player.pickUpAlcohol(drinks);
 
-            if (Keyboard::isKeyPressed(Keyboard::R))
-                player.selectedAlcohol = AlcoholType((int(player.selectedAlcohol) + 1) % 4);
-            if (Keyboard::isKeyPressed(Keyboard::T))
-                player.selectedAlcohol = AlcoholType((int(player.selectedAlcohol) + 3) % 4);
+            // Wybór potka
+            if (Keyboard::isKeyPressed(Keyboard::Num1)) player.selectedAlcohol = AlcoholType::Piwo;
+            if (Keyboard::isKeyPressed(Keyboard::Num2)) player.selectedAlcohol = AlcoholType::Wodka;
+            if (Keyboard::isKeyPressed(Keyboard::Num3)) player.selectedAlcohol = AlcoholType::Kubus;
+            if (Keyboard::isKeyPressed(Keyboard::Num4)) player.selectedAlcohol = AlcoholType::Wino;
+
             if (Keyboard::isKeyPressed(Keyboard::G))
                 player.useAlcohol();
             player.update(platforms);
 
-            // pułapki raniące co sekundę po 10 HP
+            // Aktualizacja pułapek
             for (auto& h : hazards)
                 h.update(player);
 
+            // Logika ruchomej ściany (dla poziomu 5)
             if (wallActive && wallClock.getElapsedTime().asSeconds() >= 2.f) {
-                // Używamy getCollisionBounds() dla kolizji ze ścianą
+
                 if (giantWall.getGlobalBounds().intersects(player.getCollisionBounds())) {
                     player.hp = 0;
                     isGameOver = true;
@@ -403,12 +407,13 @@ int main()
                     pos.x = levelWidth - giantWall.getSize().x;
                 giantWall.setPosition(pos);
             }
-            // wrogowie
+            // Aktualizacja wrogów
             for (auto& e : enemies) {
                 if (!e.alive) continue;
                 Sound& snd = (e.type == Enemy::PISTOL ? pistolSound : (e.type == Enemy::SHOTGUN ? shotgunSound : bossSound));
                 e.update(platforms, player, snd);
 
+                // Kolizje pocisków gracza z wrogami
                 for (auto& b : player.bullets)
                     if (b.active && b.shape.getGlobalBounds().intersects(e.shape.getGlobalBounds())) {
                         if (e.type == Enemy::BOSS) {
@@ -421,7 +426,7 @@ int main()
                         b.active = false;
                     }
 
-                // Kolizje pocisków wroga z graczem już używają getCollisionBounds(), więc jest OK.
+                // Kolizje pocisków wroga z graczem
                 for (auto& b : e.bullets)
                     if (b.active && b.shape.getGlobalBounds().intersects(player.getCollisionBounds())) {
                         player.takeDamage(10);
@@ -430,7 +435,7 @@ int main()
             }
 
             if (player.hp <= 0) isGameOver = true;
-            // Używamy getCollisionBounds() dla kolizji z drzwiami
+            // Kolizja gracza z drzwiami (ukończenie poziomu)
             if (player.getCollisionBounds().intersects(doorSprite.getGlobalBounds())) {
                 bool bossAlive = false;
                 if (menu.selectedLevel == 4) {
@@ -442,7 +447,7 @@ int main()
                     }
                 }
                 if (menu.selectedLevel == 4 && bossAlive) {
-                    // Nie pozwól ukończyć poziomu, dopóki boss żyje
+                    // Nie pozwól ukończyć poziomu 4, dopóki boss żyje
                 }
                 else if (menu.selectedLevel < 5) {
                     menu.selectedLevel++;
@@ -457,26 +462,28 @@ int main()
             }
         }
 
-        // kamera
+        // Aktualizacja kamery
         Vector2f cam = player.shape.getPosition() + player.shape.getSize() / 2.f;
         cam.x = std::max(400.f, std::min(cam.x, levelWidth - 400.f));
-        float bgVisibleHeight = bgTex.getSize().y * ((600.f / bgTex.getSize().y) * 2.0f);
+        float bgVisibleHeight = static_cast<float>(bgTex.getSize().y) * ((600.f / static_cast<float>(bgTex.getSize().y)) * 2.0f);
         float minY = 300.f;
         float maxY = bgVisibleHeight - 600.f;
         cam.y = std::max(minY, std::min(cam.y, maxY));
         view.setCenter(cam);
         window.setView(view);
-        // potkimenu
+
+        // Wyświetlanie inwentarza potków
         sf::Text potionText;
         potionText.setFont(font);
         std::string names[4] = { "Piwo", "Wodka", "Kubus", "Wino" };
-        potionText.setString(names[int(player.selectedAlcohol)] + ": " + std::to_string(player.alcoholInventory[player.selectedAlcohol]));
+        potionText.setString(names[static_cast<int>(player.selectedAlcohol)] + ": " + std::to_string(player.alcoholInventory[player.selectedAlcohol]));
         potionText.setCharacterSize(24);
         potionText.setFillColor(sf::Color::White);
-        potionText.setPosition(view.getCenter().x - 400 + 10, view.getCenter().y - 300 + 10); // Pozycja względem widoku
+        potionText.setPosition(view.getCenter().x - 400.f + 10.f, view.getCenter().y - 300.f + 10.f);
         if (!menu.inMenu && !isGameOver && !inCredits)
             window.draw(potionText);
-        // render
+
+        // Renderowanie elementów gry
         window.clear(Color::Cyan);
         if (isGameOver) {
             window.setView(window.getDefaultView());

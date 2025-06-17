@@ -4,29 +4,24 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <algorithm> 
+
 using namespace sf;
 using namespace std;
 
 static const float GRAVITY = 0.5f;
 static const float JUMP_SPEED = -10.f;
 
-// Inicjalizacja statycznych tekstur dla Platform i Player
+// Inicjalizacja statycznych tekstur
 Texture Platform::texture;
 Texture Player::runTexture;
-
-// Inicjalizacja statycznych tekstur dla Alcohol
 Texture Alcohol::beerTexture;
 Texture Alcohol::wodkaTexture;
 Texture Alcohol::kubusTexture;
 Texture Alcohol::wineTexture;
-
-// Inicjalizacja statycznej tekstury dla wroga PISTOL
 Texture Enemy::pistolEnemyTexture;
-// Inicjalizacja statycznej tekstury dla wroga SHOTGUN
 Texture Enemy::shotgunEnemyTexture;
-
-// Inicjalizacja statycznej tekstury dla Hazard
-Texture Hazard::texture; // Dodano inicjalizację statycznej tekstury
+Texture Hazard::texture;
 
 // --- Platform ---
 Platform::Platform(float x, float y, float w, float h) {
@@ -37,7 +32,7 @@ Platform::Platform(float x, float y, float w, float h) {
     }
     shape.setTexture(&texture);
     shape.setSize({ w,h });
-    shape.setTextureRect({ 0,0,int(w),int(h) });
+    shape.setTextureRect({ 0,0,static_cast<int>(w),static_cast<int>(h) });
     shape.setPosition(x, y);
 }
 
@@ -59,7 +54,7 @@ Bullet::Bullet(float x, float y, float vx, float vy)
     : velocity(vx, vy), active(true)
 {
     shape.setPosition(x, y);
-    shape.setSize({ 10,5 });
+    shape.setSize({ 10.f,5.f });
     shape.setFillColor(Color::Yellow);
     damage = 10;
 }
@@ -69,7 +64,7 @@ void Bullet::update() {
 
 // --- Player ---
 Player::Player(float x, float y)
-    : velocity(0, 0), onGround(false), hp(100)
+    : velocity(0.f, 0.f), onGround(false), hp(100)
 {
     if (runTexture.getSize().x == 0) {
         if (!runTexture.loadFromFile("player_run.png"))
@@ -78,15 +73,16 @@ Player::Player(float x, float y)
     int fw = runTexture.getSize().x / frameCount;
     int fh = runTexture.getSize().y;
 
-    shape.setSize({ float(fw),float(fh) }); 
+    shape.setSize({ static_cast<float>(fw),static_cast<float>(fh) });
     shape.setTexture(&runTexture);
     shape.setTextureRect({ 0,0,fw,fh });
-    shape.setOrigin(fw / 2.f, fh / 2.f);
-    shape.setPosition(x + fw / 2.f, y + fh / 2.f);
+    shape.setOrigin(static_cast<float>(fw) / 2.f, static_cast<float>(fh) / 2.f);
+    shape.setPosition(x + static_cast<float>(fw) / 2.f, y + static_cast<float>(fh) / 2.f);
 
-    hpBar.setSize({ float(hp),10 });
+    hpBar.setSize({ static_cast<float>(hp),10.f });
     hpBar.setFillColor(Color::Green);
     hpBar.setPosition(x, y - 15.f);
+    shootClock.restart();
 }
 void Player::move(float dx) {
     velocity.x = dx; shape.move(dx, 0);
@@ -103,7 +99,7 @@ void Player::update(const vector<Platform*>& plats) {
         shape.setScale((velocity.x < 0 ? -1.f : 1.f), 1.f);
     }
     else {
-        shape.setScale(1, 1);
+        shape.setScale(1.f, 1.f);
         int fw = runTexture.getSize().x / frameCount;
         int fh = runTexture.getSize().y;
         shape.setTextureRect({ 0,0,fw,fh });
@@ -121,40 +117,47 @@ void Player::update(const vector<Platform*>& plats) {
     for (auto* p : plats) {
         auto pb = p->shape.getGlobalBounds();
         if (gb.intersects(pb) && velocity.y >= 0) {
-            shape.setPosition(gb.left + gb.width / 2.f,
-                pb.top - gb.height / 2.f);
-            velocity.y = 0; onGround = true; break;
+            // KLUCZOWA POPRAWKA: Ustawienie pozycji Y gracza idealnie na platformie.
+            // Obliczenia uwzględniają 'origin' sprite'a.
+            shape.setPosition(shape.getPosition().x, pb.top - shape.getGlobalBounds().height + shape.getOrigin().y);
+            velocity.y = 0.f; onGround = true; break;
         }
     }
     for (auto& b : bullets) b.update();
-    velocity.x = 0;
+    velocity.x = 0.f;
 }
 void Player::jump() {
-    if (onGround) { velocity.y = JUMP_SPEED; onGround = false; }
+    if (onGround) { velocity.y = JUMP_SPEED - jumpBoost; onGround = false; }
 }
 void Player::takeDamage(int amt) {
     hp = max(0, hp - amt);
-    hpBar.setSize({ float(hp),10 });
+    hpBar.setSize({ static_cast<float>(hp),10.f });
 }
 void Player::shoot(const Vector2f& tgt) {
     auto c = shape.getPosition();
     float dx = tgt.x - c.x, dy = tgt.y - c.y;
     float len = sqrt(dx * dx + dy * dy);
-    if (len > 0) bullets.emplace_back(c.x, c.y, dx / len * 8.f, dy / len * 8.f);
+    if (shootClock.getElapsedTime().asSeconds() >= (0.15f * cooldownPenalty)) {
+        if (len > 0) {
+            Bullet b(c.x, c.y, dx / len * 8.f, dy / len * 8.f);
+            b.damage = static_cast<int>(b.damage * damageBoost);
+            bullets.push_back(b);
+        }
+        shootClock.restart();
+    }
 }
 
 sf::FloatRect Player::getCollisionBounds() const {
-    auto b = shape.getGlobalBounds(); // Pobierz globalne granice sprite'a
+    auto b = shape.getGlobalBounds();
 
-    float reduceX = b.width * 0.40f; // Daje 20% szerokości
-    float reduceY = b.height * 0.25f; // Daje 50% wysokości
+    float reduceX = b.width * 0.20f;
+    float reduceY = b.height * 0.10f;
 
-    // Zastosuj zmniejszenia
-    b.left += reduceX; // Przesuń lewą krawędź w prawo
-    b.width -= (reduceX * 2); // Zmniejsz szerokość o podwójną wartość reduceX
+    b.left += reduceX;
+    b.width -= (reduceX * 2.f);
 
-    b.top += reduceY; // Przesuń górną krawędź w dół
-    b.height -= (reduceY * 2); // Zmniejsz wysokość o podwójną wartość reduceY
+    b.top += reduceY;
+    b.height -= (reduceY * 2.f);
 
     return b;
 }
@@ -174,25 +177,25 @@ Enemy::Enemy(float x, float y, Type t)
                 cerr << "enemy1.png missing\n";
         }
         shape.setTexture(&pistolEnemyTexture);
-        currentEnemyWidth = (float)pistolEnemyTexture.getSize().x / pistolFrameCount;
-        currentEnemyHeight = (float)pistolEnemyTexture.getSize().y;
+        currentEnemyWidth = static_cast<float>(pistolEnemyTexture.getSize().x) / pistolFrameCount;
+        currentEnemyHeight = static_cast<float>(pistolEnemyTexture.getSize().y);
         shape.setSize({ currentEnemyWidth, currentEnemyHeight });
-        shape.setTextureRect({ 0,0,(int)currentEnemyWidth,(int)currentEnemyHeight });
+        shape.setTextureRect({ 0,0,static_cast<int>(currentEnemyWidth),static_cast<int>(currentEnemyHeight) });
         shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
     }
-    else if (type == SHOTGUN) { // Ładowanie tekstury dla SHOTGUN
+    else if (type == SHOTGUN) {
         if (shotgunEnemyTexture.getSize().x == 0) {
-            if (!shotgunEnemyTexture.loadFromFile("enemy2.png")) // Upewnij się, że nazwa pliku jest poprawna
+            if (!shotgunEnemyTexture.loadFromFile("enemy2.png"))
                 cerr << "enemy2.png missing\n";
         }
         shape.setTexture(&shotgunEnemyTexture);
-        currentEnemyWidth = (float)shotgunEnemyTexture.getSize().x / shotgunFrameCount;
-        currentEnemyHeight = (float)shotgunEnemyTexture.getSize().y;
+        currentEnemyWidth = static_cast<float>(shotgunEnemyTexture.getSize().x) / shotgunFrameCount;
+        currentEnemyHeight = static_cast<float>(shotgunEnemyTexture.getSize().y);
         shape.setSize({ currentEnemyWidth, currentEnemyHeight });
-        shape.setTextureRect({ 0,0,(int)currentEnemyWidth,(int)currentEnemyHeight });
+        shape.setTextureRect({ 0,0,static_cast<int>(currentEnemyWidth),static_cast<int>(currentEnemyHeight) });
         shape.setOrigin(currentEnemyWidth / 2.f, currentEnemyHeight / 2.f);
     }
-    else { // Dla BOSS (domyślne wartości 40x40)
+    else {
         currentEnemyWidth = 40.f;
         currentEnemyHeight = 40.f;
         shape.setSize({ currentEnemyWidth, currentEnemyHeight });
@@ -202,22 +205,23 @@ Enemy::Enemy(float x, float y, Type t)
 
     shape.setPosition(x, y - currentEnemyHeight / 2.f);
 
-    shootCooldown = (type == PISTOL ? 0.8f : (type == SHOTGUN ? 1.5f : 0.5f)); // Dostosuj cooldown dla Shotguna
+    shootCooldown = (type == PISTOL ? 0.8f : (type == SHOTGUN ? 1.5f : 0.5f));
     shootClock.restart();
     pistolAnimClock.restart();
-    shotgunAnimClock.restart(); // Uruchomienie zegara animacji dla SHOTGUN
+    shotgunAnimClock.restart();
 }
 
 void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::Sound& snd) {
     if (type == BOSS) {
-        bossCenter = sf::Vector2f(1000, 500);
-        bossRadius = 300;
-        bossTime += 0.1f;
+        bossCenter = sf::Vector2f(1000.f, 500.f);
+        bossTime += 0.05f;
         float t = bossTime * 0.5f;
         float a = bossRadius;
-        float x = a * std::sin(t) / (1 + std::pow(std::cos(t), 2));
-        float y = a * std::sin(t) * std::cos(t) / (1 + std::pow(std::cos(t), 2));
+        // Ruch bossa po lemniskacie Bernoulliego (ósemka)
+        float x = a * std::sin(t) / (1.f + std::pow(std::cos(t), 2.f));
+        float y = a * std::sin(t) * std::cos(t) / (1.f + std::pow(std::cos(t), 2.f));
         shape.setPosition(bossCenter.x + x, bossCenter.y + y);
+
         if (shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
             shootBossAttack(pl);
             snd.play();
@@ -243,7 +247,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
             break;
         }
     }
-    if (!onPlat) shape.move(0, GRAVITY);
+    if (!onPlat) shape.move(0.f, GRAVITY);
 
     auto eC = shape.getPosition();
     auto pC = pl.shape.getPosition();
@@ -251,7 +255,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
     float dist = sqrt(dx * dx + dy * dy);
     bool see = canSeePlayer(pl, plats) && dist < detectionRange;
 
-    // Animacja dla wroga PISTOL i SHOTGUN
+    // Animacja wroga
     if (type == PISTOL || type == SHOTGUN) {
         sf::Texture* currentTexture = nullptr;
         int* currentFramePtr = nullptr;
@@ -291,7 +295,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
                 *currentFramePtr = 0;
             }
 
-            // Logika obracania sprite'a
+            // Obracanie sprite'a
             if (state == Patrol) {
                 if (speed < 0) {
                     shape.setScale(-1.f, 1.f);
@@ -309,17 +313,17 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
                 }
             }
             else if (state == Retreat) {
-                if (dx < 0) { // Gracz na lewo, wróg ucieka w prawo
+                if (dx < 0) {
                     shape.setScale(1.f, 1.f);
                 }
-                else if (dx > 0) { // Gracz na prawo, wróg ucieka w lewo
+                else if (dx > 0) {
                     shape.setScale(-1.f, 1.f);
                 }
             }
         }
     }
 
-
+    // Maszyna stanów wroga
     switch (state) {
     case Patrol:
         if (onPlat) {
@@ -328,7 +332,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
             float currentShapeRight = shape.getPosition().x - shape.getOrigin().x + shape.getSize().x;
 
             if (speed > 0) {
-                if (currentShapeRight + speed > pB.left + pB.width - 2) {
+                if (currentShapeRight + speed > pB.left + pB.width - 2.f) {
                     speed = -speed;
                 }
                 else {
@@ -336,7 +340,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
                 }
             }
             else {
-                if (currentShapeLeft + speed < pB.left + 2) {
+                if (currentShapeLeft + speed < pB.left + 2.f) {
                     speed = -speed;
                 }
                 else {
@@ -380,9 +384,9 @@ void Enemy::shootShotgun(const Player& pl) {
     auto p = pl.shape.getPosition();
     float baseAng = atan2(p.y - e.y, p.x - e.x);
     const int pellets = 5;
-    const float spread = 15 * 3.14159f / 180.f, spd = 6.f;
+    const float spread = 15.f * 3.14159f / 180.f, spd = 6.f;
     for (int i = 0;i < pellets;i++) {
-        float ang = baseAng + (i - pellets / 2) * spread;
+        float ang = baseAng + (static_cast<float>(i) - static_cast<float>(pellets) / 2.f) * spread;
         bullets.emplace_back(e.x, e.y, cos(ang) * spd, sin(ang) * spd);
     }
 }
@@ -393,7 +397,7 @@ void Enemy::shootBossAttack(const Player& pl) {
     float len = sqrt(dx * dx + dy * dy);
     if (len > 0) {
         Bullet b(e.x, e.y, dx / len * 8.f, dy / len * 8.f);
-        b.shape.setSize({ 30, 15 });
+        b.shape.setSize({ 30.f, 15.f });
         b.shape.setFillColor(sf::Color::Red);
         b.damage = 30;
         bullets.push_back(b);
@@ -409,9 +413,9 @@ bool Enemy::canSeePlayer(const Player& pl,
     auto E = shape.getPosition();
     auto P = pl.shape.getPosition();
     auto dir = P - E; float len = sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (len == 0) return true;
+    if (len == 0.f) return true;
     dir /= len;
-    for (float d = 0;d < len;d += 5.f) {
+    for (float d = 0.f;d < len;d += 5.f) {
         auto sample = E + dir * d;
         for (auto* p : plats) {
             if (p->shape.getGlobalBounds().contains(sample))
@@ -423,24 +427,24 @@ bool Enemy::canSeePlayer(const Player& pl,
 
 // --- Hazard ---
 Hazard::Hazard(float x, float y, float w, float h) {
-    if (texture.getSize().x == 0) { // Sprawdź, czy tekstura jest już załadowana
+    if (texture.getSize().x == 0) {
         if (!texture.loadFromFile("lava.png")) {
             cerr << "ERROR: lava.png missing or could not be loaded! Please ensure it's in the same directory as the executable.\n";
         }
         else {
             cerr << "SUCCESS: lava.png loaded. Size: " << texture.getSize().x << "x" << texture.getSize().y << "\n";
-            texture.setRepeated(true);  // Ustawienie powtarzania
-            texture.setSmooth(false);   // Wyłączenie wygładzania dla pikselowej tekstury
+            texture.setRepeated(true);
+            texture.setSmooth(false);
         }
     }
-    shape.setTexture(&texture); // Ustaw teksturę
+    shape.setTexture(&texture);
     shape.setSize({ w,h });
-    shape.setTextureRect(sf::IntRect(0, 0, (int)w, (int)h));
+    shape.setTextureRect(sf::IntRect(0, 0, static_cast<int>(w), static_cast<int>(h)));
     shape.setPosition(x, y);
     damageClock.restart();
 }
 void Hazard::update(Player& p) {
-    // Używamy getCollisionBounds() gracza do detekcji kolizji
+    // Zadawanie obrażeń co sekundę
     if (shape.getGlobalBounds().intersects(p.getCollisionBounds())) {
         if (damageClock.getElapsedTime().asSeconds() >= 1.f) {
             p.takeDamage(10);
@@ -448,34 +452,21 @@ void Hazard::update(Player& p) {
         }
     }
     else {
+        // Reset zegara, gdy gracz opuści pułapkę
         damageClock.restart();
     }
 }
 
-// Zmieniony konstruktor Alcohol
+// Konstruktor Alcohol
 Alcohol::Alcohol(AlcoholType t, float x, float y) : type(t) {
     shape.setSize({ 30.f, 30.f });
     shape.setPosition(x, y);
 
-    // Ładowanie tekstur, jeśli jeszcze nie są załadowane
-    if (beerTexture.getSize().x == 0) {
-        if (!beerTexture.loadFromFile("beer.png"))
-            cerr << "beer.png missing\n";
-    }
-    if (wodkaTexture.getSize().x == 0) {
-        if (!wodkaTexture.loadFromFile("wodka.png"))
-            cerr << "wodka.png missing\n";
-    }
-    if (kubusTexture.getSize().x == 0) {
-        if (!kubusTexture.loadFromFile("kubus.png"))
-            cerr << "kubus.png missing\n";
-    }
-    if (wineTexture.getSize().x == 0) {
-        if (!wineTexture.loadFromFile("wine.png"))
-            cerr << "wine.png missing\n";
-    }
-
-    // Przypisywanie tekstury na podstawie typu alkoholu
+    // Ładowanie i przypisywanie tekstur
+    if (beerTexture.getSize().x == 0) { if (!beerTexture.loadFromFile("beer.png")) cerr << "beer.png missing\n"; }
+    if (wodkaTexture.getSize().x == 0) { if (!wodkaTexture.loadFromFile("wodka.png")) cerr << "wodka.png missing\n"; }
+    if (kubusTexture.getSize().x == 0) { if (!kubusTexture.loadFromFile("kubus.png")) cerr << "kubus.png missing\n"; }
+    if (wineTexture.getSize().x == 0) { if (!wineTexture.loadFromFile("wine.png")) cerr << "wine.png missing\n"; }
     switch (t) {
     case AlcoholType::Piwo: shape.setTexture(&beerTexture); break;
     case AlcoholType::Wodka: shape.setTexture(&wodkaTexture); break;
@@ -485,99 +476,77 @@ Alcohol::Alcohol(AlcoholType t, float x, float y) : type(t) {
 }
 
 void Player::pickUpAlcohol(std::vector<Alcohol>& drinks) {
-    for (auto& a : drinks) {
-        // Używamy getCollisionBounds() gracza do detekcji kolizji
-        if (!a.picked && getCollisionBounds().intersects(a.shape.getGlobalBounds())) {
-            alcoholInventory[a.type]++;
-            a.picked = true;
-            std::cout << "Picked up alcohol type: " << static_cast<int>(a.type) << "\n";
+    for (auto it = drinks.begin(); it != drinks.end(); ) {
+        // Sprawdzenie kolizji z "potkiem" i podniesienie go
+        if (!it->picked && getCollisionBounds().intersects(it->shape.getGlobalBounds())) {
+            alcoholInventory[it->type]++;
+            it->picked = true;
+            std::cout << "Picked up alcohol type: " << static_cast<int>(it->type) << ". Count: " << alcoholInventory[it->type] << "\n";
+            it = drinks.erase(it);
 
             std::ofstream out("potki.txt", std::ios::trunc);
-            if (!out.is_open()) {
-                std::cerr << "Could not open potki.txt for writing.\n";
-                continue;
+            if (!out.is_open()) { std::cerr << "Could not open potki.txt for writing.\n"; }
+            else {
+                for (const auto& pair : alcoholInventory) { out << static_cast<int>(pair.first) << " " << pair.second << "\n"; }
+                out.close();
             }
-            for (const auto& pair : alcoholInventory) {
-                out << static_cast<int>(pair.first) << " " << pair.second << "\n";
-            }
+        }
+        else {
+            ++it;
         }
     }
 }
-
 
 void Player::useAlcohol() {
     if (alcoholInventory[selectedAlcohol] > 0) {
         alcoholInventory[selectedAlcohol]--;
 
+        // Zastosowanie efektów alkoholu
         switch (selectedAlcohol) {
-        case AlcoholType::Piwo: jumpBoost += 0.5f; break;
-        case AlcoholType::Wodka: cooldownPenalty *= 2.f; break;
-        case AlcoholType::Kubus: speedBoost += 0.1f; break;
-        case AlcoholType::Wino: damageBoost += 0.2f; break;
+        case AlcoholType::Piwo: jumpBoost += 0.5f; std::cout << "Uzyto piwa. Zwiekszona sila skoku!\n"; break;
+        case AlcoholType::Wodka: cooldownPenalty *= 2.f; std::cout << "Uzyto wodki. Zwiekszony cooldown strzelania!\n"; break;
+        case AlcoholType::Kubus: speedBoost += 0.1f; std::cout << "Uzyto kubusia. Zwiekszona predkosc ruchu!\n"; break;
+        case AlcoholType::Wino: damageBoost += 0.2f; std::cout << "Uzyto wina. Zwiekszone obrazenia strzalow!\n"; break;
         }
 
         std::ofstream out("potki.txt", std::ios::trunc);
-        if (!out.is_open()) {
-            std::cerr << "Could not open potki.txt for writing.\n";
-            return;
-        }
-        for (const auto& pair : alcoholInventory) {
-            out << static_cast<int>(pair.first) << " " << pair.second << "\n";
-        }
+        if (!out.is_open()) { std::cerr << "Could not open potki.txt for writing.\n"; return; }
+        for (const auto& pair : alcoholInventory) { out << static_cast<int>(pair.first) << " " << pair.second << "\n"; }
+        out.close();
     }
+    else { std::cout << "Brak " << static_cast<int>(selectedAlcohol) << " w ekwipunku!\n"; }
 }
 
 void Player::resetAlcoholEffects() {
-    jumpBoost = 0.f;
-    speedBoost = 1.f;
-    damageBoost = 1.f;
-    cooldownPenalty = 1.f;
+    jumpBoost = 0.f; speedBoost = 1.f; damageBoost = 1.f; cooldownPenalty = 1.f;
     alcoholInventory.clear();
     hp = 100;
-    hpBar.setSize({ float(hp), 10 });
-    std::ofstream out("potki.txt", std::ios::trunc);
-    out.close();
+    hpBar.setSize({ static_cast<float>(hp), 10.f });
+    std::ofstream out("potki.txt", std::ios::trunc); out.close();
 }
-
 
 // --- Menu ---
 Menu::Menu() :inMenu(true), selectedLevel(0) {
     if (!font.loadFromFile("flame.otf")) cerr << "flame.otf missing\n";
-    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300, 100);
-    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 150);
-    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 200);
-    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300, 250);
-    t5.setFont(font); t5.setString("5: Level 5"); t5.setPosition(300, 300);
-    if (!bgTexture.loadFromFile("tlo_menu.png"))
-        cerr << "tlo_menu.png missing\n";
+    t1.setFont(font); t1.setString("1: Level 1"); t1.setPosition(300.f, 100.f);
+    t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300.f, 150.f);
+    t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300.f, 200.f);
+    t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300.f, 250.f);
+    t5.setFont(font); t5.setString("5: Level 5"); t5.setPosition(300.f, 300.f);
+    if (!bgTexture.loadFromFile("tlo_menu.png")) cerr << "tlo_menu.png missing\n";
     bgSprite.setTexture(bgTexture);
 }
 void Menu::handleInput() {
-    if (Keyboard::isKeyPressed(Keyboard::Num1))
-    {
-        selectedLevel = 1; inMenu = false;
-    }
-    if (Keyboard::isKeyPressed(Keyboard::Num2))
-    {
-        selectedLevel = 2; inMenu = false;
-    }
-    if (Keyboard::isKeyPressed(Keyboard::Num3))
-    {
-        selectedLevel = 3; inMenu = false;
-    }
-    if (Keyboard::isKeyPressed(Keyboard::Num4))
-    {
-        selectedLevel = 4; inMenu = false;
-    }
-    if (Keyboard::isKeyPressed(Keyboard::Num5))
-    {
-        selectedLevel = 5; inMenu = false;
-    }
+    if (Keyboard::isKeyPressed(Keyboard::Num1)) { selectedLevel = 1; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num2)) { selectedLevel = 2; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num3)) { selectedLevel = 3; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num4)) { selectedLevel = 4; inMenu = false; }
+    if (Keyboard::isKeyPressed(Keyboard::Num5)) { selectedLevel = 5; inMenu = false; }
 }
 void Menu::draw(RenderWindow& w) {
     auto ws = w.getSize();
-    float sx = float(ws.x) / bgTexture.getSize().x;
-    float sy = float(ws.y) / bgTexture.getSize().y;
+    float sx = static_cast<float>(ws.x) / bgTexture.getSize().x;
+    float sy = static_cast<float>(ws.y) / bgTexture.getSize().y;
     bgSprite.setScale(sx, sy);
     w.draw(bgSprite);
     w.draw(t1); w.draw(t2); w.draw(t3); w.draw(t4); w.draw(t5);

@@ -1,41 +1,4 @@
 ﻿  apkatest.cpp
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(196,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(197,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244: "argument": konwersja z "_Ty" do "float", możliwa utrata danych
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:         with
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:         [
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:             _Ty=int
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:         ]
-  (kompilowanie pliku źródłowego „apkatest.cpp”)
-      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103):
-      kontekst tworzenia wystąpienia szablonu (najpierw najstarszy) to
-          C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(157,25):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „void std::vector<Enemy,std::allocator<Enemy>>::emplace_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-              C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(157,37):
-              zobacz pierwsze odwołanie do elementu „std::vector<Enemy,std::allocator<Enemy>>::emplace_back” w „main::<lambda_2>::operator ()”
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(924,24):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_one_at_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-          with
-          [
-              _Ty=Enemy
-          ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(845,20):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_back_with_unused_capacity<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-          with
-          [
-              _Ty=Enemy
-          ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(863,27):
-          zobacz odwołanie do kompilowanego tworzenia wystąpienia „void std::_Default_allocator_traits<_Alloc>::construct<_Ty,int,int,Enemy::Type>(_Alloc &,_Objty *const ,int &&,int &&,Enemy::Type &&)” funkcji szablon
-          with
-          [
-              _Alloc=std::allocator<Enemy>,
-              _Ty=Enemy,
-              _Objty=Enemy
-          ]
-  
   klasy.cpp
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.cpp(224,17): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.cpp(225,17): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
   Generowanie kodu...
   apkatest.vcxproj -> C:\Users\mikus\Desktop\projekt_oficial\Marian\x64\Debug\apkatest.exe
