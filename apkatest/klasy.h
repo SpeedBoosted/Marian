@@ -119,6 +119,18 @@ public:
     int currentShotgunFrame = 0;
     sf::Clock shotgunAnimClock;
 
+    static sf::Texture pistolEnemyTexture;
+    int pistolFrameCount = 10;
+    float pistolTimePerFrame = 0.1f;
+    int currentPistolFrame = 0;
+    sf::Clock pistolAnimClock;
+
+    static sf::Texture shotgunEnemyTexture;
+    int shotgunFrameCount = 10;
+    float shotgunTimePerFrame = 0.1f;
+    int currentShotgunFrame = 0;
+    sf::Clock shotgunAnimClock;
+
     Enemy(float x = 0, float y = 0, Type t = PISTOL);
     void update(const std::vector<Platform*>& plats,
         const Player& pl,
