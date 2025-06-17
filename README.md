@@ -12,3 +12,4 @@ Muzyka:
         "Five Armies - Kevin MacLeod",
         "Spazzmatica Polka - Kevin MacLeod",
         "Nothings Gonna Stop Us Now - Greg O'Connor"
+gracz pije za pomocą g a wybiera napój opcjami 1,2,3,4
