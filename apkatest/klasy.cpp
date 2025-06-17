@@ -78,9 +78,7 @@ Player::Player(float x, float y)
     int fw = runTexture.getSize().x / frameCount;
     int fh = runTexture.getSize().y;
 
-    // Jeżeli gracz wizualnie jest za duży, dostosuj poniższe wartości
-    // np. shape.setSize({ fw * 0.8f, fh * 0.8f }); aby zmniejszyć o 20%
-    shape.setSize({ float(fw),float(fh) }); // Obecnie rozmiar shape jest równy oryginalnej klatce animacji
+    shape.setSize({ float(fw),float(fh) }); 
     shape.setTexture(&runTexture);
     shape.setTextureRect({ 0,0,fw,fh });
     shape.setOrigin(fw / 2.f, fh / 2.f);
@@ -145,13 +143,9 @@ void Player::shoot(const Vector2f& tgt) {
     if (len > 0) bullets.emplace_back(c.x, c.y, dx / len * 8.f, dy / len * 8.f);
 }
 
-// TUTAJ SĄ KLUCZOWE ZMIANY DLA HITBOXA
 sf::FloatRect Player::getCollisionBounds() const {
     auto b = shape.getGlobalBounds(); // Pobierz globalne granice sprite'a
 
-    // Procentowe zmniejszenie hitboxa z każdej strony.
-    // Np. 0.40f oznacza, że 40% szerokości z lewej i 40% z prawej zostanie "odcięte".
-    // Czyli zostanie 100% - (2 * 40%) = 20% oryginalnej szerokości.
     float reduceX = b.width * 0.40f; // Daje 20% szerokości
     float reduceY = b.height * 0.25f; // Daje 50% wysokości
 

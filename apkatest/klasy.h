@@ -108,15 +108,15 @@ public:
     float bossRadius = 120.f;
 
     // Nowe zmienne dla animacji wroga PISTOL
-    static sf::Texture pistolEnemyTexture; // Statyczna tekstura dla wroga PISTOL
-    int pistolFrameCount = 10; // Liczba klatek w animacji
-    float pistolTimePerFrame = 0.1f; // Czas na klatkę (dostosuj, jeśli potrzeba)
+    static sf::Texture pistolEnemyTexture; 
+    int pistolFrameCount = 10; 
+    float pistolTimePerFrame = 0.1f; 
     int currentPistolFrame = 0;
     sf::Clock pistolAnimClock;
 
-    // Nowe zmienne dla animacji wroga SHOTGUN
-    static sf::Texture shotgunEnemyTexture; // Statyczna tekstura dla wroga SHOTGUN
-    int shotgunFrameCount = 10; // Liczba klatek w animacji (zakładam, że tyle samo)
+ 
+    static sf::Texture shotgunEnemyTexture; 
+    int shotgunFrameCount = 10; 
     float shotgunTimePerFrame = 0.1f; // Czas na klatkę (dostosuj)
     int currentShotgunFrame = 0;
     sf::Clock shotgunAnimClock;

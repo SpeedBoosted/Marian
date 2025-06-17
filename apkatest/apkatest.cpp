@@ -16,11 +16,10 @@ int main()
 {
     std::srand((unsigned)std::time(nullptr));
 
-    // ***************************************************************
-    // KLUCZOWA ZMIANA: Wyłączenie antialiasingu dla piksel-artu
+
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 0; // Ustawienie antialiasingu na 0
-    // ***************************************************************
+    settings.antialiasingLevel = 0; 
+
 
     // Przekazanie ustawień kontekstu do konstruktora okna
     RenderWindow window(VideoMode(800, 600), "Marian", sf::Style::Default, settings);
