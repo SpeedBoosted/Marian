@@ -1,29 +1,31 @@
 ﻿  apkatest.cpp
-C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(181,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
-C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(182,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244: "argument": konwersja z "_Ty" do "float", możliwa utrata danych
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:         with
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:         [
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:             _Ty=int
-C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103): warning C4244:         ]
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(187,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(188,29): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244: "argument": konwersja z "_Ty" do "float", możliwa utrata danych
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:             _Ty=int
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103): warning C4244:         ]
   (kompilowanie pliku źródłowego „apkatest.cpp”)
-      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\xmemory(700,103):
+      C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\xmemory(732,103):
       kontekst tworzenia wystąpienia szablonu (najpierw najstarszy) to
-          C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(141,25):
+          C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(148,25):
           zobacz odwołanie do kompilowanego tworzenia wystąpienia „void std::vector<Enemy,std::allocator<Enemy>>::emplace_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\vector(858,24):
+              C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(148,37):
+              zobacz pierwsze odwołanie do elementu „std::vector<Enemy,std::allocator<Enemy>>::emplace_back” w „main::<lambda_2>::operator ()”
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(924,24):
           zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_one_at_back<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
           with
           [
               _Ty=Enemy
           ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\vector(776,20):
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(845,20):
           zobacz odwołanie do kompilowanego tworzenia wystąpienia „_Ty &std::vector<_Ty,std::allocator<_Ty>>::_Emplace_back_with_unused_capacity<int,int,Enemy::Type>(int &&,int &&,Enemy::Type &&)” funkcji szablon
           with
           [
               _Ty=Enemy
           ]
-          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.34433\include\vector(794,27):
+          C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\include\vector(863,27):
           zobacz odwołanie do kompilowanego tworzenia wystąpienia „void std::_Default_allocator_traits<_Alloc>::construct<_Ty,int,int,Enemy::Type>(_Alloc &,_Objty *const ,int &&,int &&,Enemy::Type &&)” funkcji szablon
           with
           [
@@ -32,4 +34,8 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.42.3443
               _Objty=Enemy
           ]
   
-  apkatest.vcxproj -> C:\ProjektMarian\Marianaa\x64\Debug\apkatest.exe
+  klasy.cpp
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.cpp(163,17): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.cpp(164,17): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+  Generowanie kodu...
+  apkatest.vcxproj -> C:\Users\mikus\Desktop\projekt_oficial\Marian\x64\Debug\apkatest.exe

@@ -1,4 +1,3 @@
-// klasy.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -28,8 +27,8 @@ public:
 class Bullet {
 public:
     sf::RectangleShape shape;
-    sf::Vector2f      velocity;
-    bool              active;
+    sf::Vector2f       velocity;
+    bool               active;
     int damage = 10;
     Bullet(float x, float y, float vx, float vy);
     void update();
@@ -42,12 +41,18 @@ public:
     AlcoholType type;
     sf::RectangleShape shape;
     bool picked = false;
+
+    // Statyczne tekstury dla ka¿dego typu alkoholu
+    static sf::Texture beerTexture;
+    static sf::Texture wodkaTexture;
+    static sf::Texture kubusTexture;
+    static sf::Texture wineTexture;
 };
 
 class Player {
 public:
     sf::RectangleShape shape, hpBar;
-    sf::Vector2f      velocity;
+    sf::Vector2f       velocity;
     bool               onGround;
     int                hp;
     std::vector<Bullet> bullets;
@@ -57,6 +62,7 @@ public:
     float  timePerFrame = 0.08f;
     int    currentFrame = 0;
     sf::Clock animClock;
+    sf::Clock damageClock; // Dodany clock do obs³ugi hazardów
 
     Player(float x = 0, float y = 0);
     void update(const std::vector<Platform*>& plats);
@@ -83,19 +89,19 @@ public:
     enum Type { PISTOL, SHOTGUN, BOSS };
     enum State { Patrol, Chase, Attack, Retreat };
 
-    sf::RectangleShape   shape;
+    sf::RectangleShape    shape;
     int hits = 0;
-    float                speed;
-    bool                 alive;
-    int                  hp;
-    Type                 type;
-    State                state;
-    float                detectionRange;
-    int                  retreatThreshold;
-    int                  chaseThreshold;
-    float                shootCooldown;
-    sf::Clock            shootClock;
-    std::vector<Bullet>  bullets;
+    float                 speed;
+    bool                  alive;
+    int                   hp;
+    Type                  type;
+    State                 state;
+    float                 detectionRange;
+    int                   retreatThreshold;
+    int                   chaseThreshold;
+    float                 shootCooldown;
+    sf::Clock             shootClock;
+    std::vector<Bullet>   bullets;
     float bossTime = 0.f; // tylko dla bossa te 3 som
     sf::Vector2f bossCenter;
     float bossRadius = 120.f;
@@ -121,15 +127,17 @@ public:
     void update(Player& p);
 
 private:
+    // damageClock przeniesiony do klasy Hazard, aby ka¿dy hazard mia³ swój w³asny timer
+    // Nale¿y usun¹æ tê zmienn¹, jeœli wolisz mieæ damageClock w Player
     sf::Clock damageClock;
 };
 
 class Menu {
 public:
-    sf::Font   font;
-    sf::Text   t1, t2, t3, t4, t5;
-    bool       inMenu;
-    int        selectedLevel;
+    sf::Font    font;
+    sf::Text    t1, t2, t3, t4, t5;
+    bool        inMenu;
+    int         selectedLevel;
     sf::Texture bgTexture;
     sf::Sprite  bgSprite;
 

@@ -1,5 +1,4 @@
-﻿// klasy.cpp
-#include "klasy.h"
+﻿#include "klasy.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <cmath>
@@ -11,8 +10,17 @@ using namespace std;
 static const float GRAVITY = 0.5f;
 static const float JUMP_SPEED = -10.f;
 
-// --- Platform ---
+// Inicjalizacja statycznych tekstur dla Platform i Player
 Texture Platform::texture;
+Texture Player::runTexture;
+
+// Inicjalizacja statycznych tekstur dla Alcohol
+Texture Alcohol::beerTexture;
+Texture Alcohol::wodkaTexture;
+Texture Alcohol::kubusTexture;
+Texture Alcohol::wineTexture;
+
+// --- Platform ---
 Platform::Platform(float x, float y, float w, float h) {
     if (texture.getSize().x == 0) {
         if (!texture.loadFromFile("platform.png"))
@@ -52,7 +60,6 @@ void Bullet::update() {
 }
 
 // --- Player ---
-Texture Player::runTexture;
 Player::Player(float x, float y)
     : velocity(0, 0), onGround(false), hp(100)
 {
@@ -208,7 +215,7 @@ void Enemy::update(const std::vector<Platform*>& plats, const Player& pl, sf::So
         if (hp < retreatThreshold) { state = Retreat; break; }
         if (shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
             if (type == PISTOL) shootPistol(pl);
-            else             shootShotgun(pl);
+            else          shootShotgun(pl);
             snd.play();
             shootClock.restart();
         }
@@ -284,22 +291,43 @@ void Hazard::update(Player& p) {
     if (shape.getGlobalBounds().intersects(p.shape.getGlobalBounds())) {
         if (damageClock.getElapsedTime().asSeconds() >= 1.f) {
             p.takeDamage(10);
-            damageClock.restart();
+            damageClock.restart(); // Używa damageClock z klasy Hazard
         }
     }
     else {
-        damageClock.restart();
+        damageClock.restart(); // Używa damageClock z klasy Hazard
     }
 }
 
+// Zmieniony konstruktor Alcohol
 Alcohol::Alcohol(AlcoholType t, float x, float y) : type(t) {
     shape.setSize({ 30.f, 30.f });
     shape.setPosition(x, y);
+
+    // Ładowanie tekstur, jeśli jeszcze nie są załadowane
+    if (beerTexture.getSize().x == 0) {
+        if (!beerTexture.loadFromFile("beer.png"))
+            cerr << "beer.png missing\n";
+    }
+    if (wodkaTexture.getSize().x == 0) {
+        if (!wodkaTexture.loadFromFile("wodka.png"))
+            cerr << "wodka.png missing\n";
+    }
+    if (kubusTexture.getSize().x == 0) {
+        if (!kubusTexture.loadFromFile("kubus.png"))
+            cerr << "kubus.png missing\n";
+    }
+    if (wineTexture.getSize().x == 0) {
+        if (!wineTexture.loadFromFile("wine.png"))
+            cerr << "wine.png missing\n";
+    }
+
+    // Przypisywanie tekstury na podstawie typu alkoholu
     switch (t) {
-    case AlcoholType::Piwo: shape.setFillColor(sf::Color::Yellow); break;
-    case AlcoholType::Wodka: shape.setFillColor(sf::Color::White); break;
-    case AlcoholType::Kubus: shape.setFillColor(sf::Color::Magenta); break;
-    case AlcoholType::Wino: shape.setFillColor(sf::Color::Red); break;
+    case AlcoholType::Piwo: shape.setTexture(&beerTexture); break;
+    case AlcoholType::Wodka: shape.setTexture(&wodkaTexture); break;
+    case AlcoholType::Kubus: shape.setTexture(&kubusTexture); break;
+    case AlcoholType::Wino: shape.setTexture(&wineTexture); break;
     }
 }
 
@@ -365,7 +393,7 @@ Menu::Menu() :inMenu(true), selectedLevel(0) {
     t2.setFont(font); t2.setString("2: Level 2"); t2.setPosition(300, 150);
     t3.setFont(font); t3.setString("3: Level 3"); t3.setPosition(300, 200);
     t4.setFont(font); t4.setString("4: Level 4"); t4.setPosition(300, 250);
-    t5.setFont(font); t5.setString("5: Level 5"); t3.setPosition(300, 300);
+    t5.setFont(font); t5.setString("5: Level 5"); t5.setPosition(300, 300);
     if (!bgTexture.loadFromFile("tlo_menu.png"))
         cerr << "tlo_menu.png missing\n";
     bgSprite.setTexture(bgTexture);
@@ -398,5 +426,5 @@ void Menu::draw(RenderWindow& w) {
     float sy = float(ws.y) / bgTexture.getSize().y;
     bgSprite.setScale(sx, sy);
     w.draw(bgSprite);
-	w.draw(t1); w.draw(t2); w.draw(t3); w.draw(t4); w.draw(t5);
+    w.draw(t1); w.draw(t2); w.draw(t3); w.draw(t4); w.draw(t5);
 }

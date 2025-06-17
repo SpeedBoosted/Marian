@@ -1,5 +1,4 @@
-﻿// main.cpp
-#include <SFML/Graphics.hpp>
+﻿#include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include "klasy.h"
 #include <vector>
@@ -55,9 +54,16 @@ int main()
 
     // GameOver
     Font font; font.loadFromFile("arial.ttf");
-    Text gameOver("Rip BOZO!\nPress any key...", font, 40);
-    gameOver.setFillColor(Color::Red);
-    gameOver.setPosition(200, 250);
+    Text gameOverText("Rip BOZO!\nPress any key...", font, 40);
+    gameOverText.setFillColor(Color::Red);
+    gameOverText.setPosition(200, 250);
+
+    Texture gameOverTex;
+    if (!gameOverTex.loadFromFile("game_over.png"))
+        std::cerr << "game_over.png missing\n";
+    Sprite gameOverSprite(gameOverTex);
+    gameOverSprite.setOrigin(gameOverTex.getSize().x / 2.f, gameOverTex.getSize().y / 2.f);
+    gameOverSprite.setPosition(400, 300);
 
     // Napisy
     sf::Music endingMusic;
@@ -103,7 +109,7 @@ int main()
     Menu menu;
     Player player;
     vector<Platform*> platforms;
-    vector<Enemy>    enemies;
+    vector<Enemy>   enemies;
     vector<Hazard>   hazards;
     bool isGameOver = false, isWin = false;
     int  currentLevel = 0;
@@ -112,7 +118,7 @@ int main()
     bool wallActive = false;
     sf::Clock wallClock;
     float wallSpeed = 0.f;
-	// muzowanie
+    // muzowanie
     auto playMusic = [&](sf::Music& music) {
         menuMusic.stop();
         level1Music.stop();
@@ -127,6 +133,7 @@ int main()
             platforms.clear();
             enemies.clear();
             hazards.clear();
+            drinks.clear(); // Czyścimy listę drinków przy ładowaniu nowego poziomu
 
             switch (lvl)
             {
@@ -140,8 +147,7 @@ int main()
                 platforms.push_back(new Platform(1100, 300, 100, 20));
                 enemies.emplace_back(400, 510, Enemy::PISTOL);
                 hazards.emplace_back(500, 530, 100, 20);
-                player.resetAlcoholEffects();
-                drinks.clear();
+                // Tworzenie drinków dla poziomu 1
                 drinks.emplace_back(Alcohol(AlcoholType::Piwo, 200.f, 520.f));
                 drinks.emplace_back(Alcohol(AlcoholType::Wodka, 250.f, 520.f));
                 drinks.emplace_back(Alcohol(AlcoholType::Kubus, 300.f, 520.f));
@@ -282,7 +288,7 @@ int main()
     {
         float deltaTime = frameClock.restart().asSeconds();
         // napisy
-        if(inCredits) {
+        if (inCredits) {
             if (endingMusic.getStatus() != sf::Music::Playing)
                 playMusic(endingMusic);
 
@@ -464,14 +470,18 @@ int main()
         potionText.setString(names[int(player.selectedAlcohol)] + ": " + std::to_string(player.alcoholInventory[player.selectedAlcohol]));
         potionText.setCharacterSize(24);
         potionText.setFillColor(sf::Color::White);
-        potionText.setPosition(10, 10);
+        potionText.setPosition(view.getCenter().x - 400 + 10, view.getCenter().y - 300 + 10); // Pozycja względem widoku
         if (!menu.inMenu && !isGameOver && !inCredits)
             window.draw(potionText);
         // render
         window.clear(Color::Cyan);
         if (isGameOver) {
             window.setView(window.getDefaultView());
-            window.draw(gameOver);
+            window.draw(gameOverSprite);
+            // Opcjonalnie: Rysuj tekst "Press any key..." nałożony na obraz
+            gameOverText.setPosition(window.getDefaultView().getCenter().x - gameOverText.getGlobalBounds().width / 2.f,
+                window.getDefaultView().getCenter().y + 150.f);
+            window.draw(gameOverText);
         }
         else {
             for (auto& s : bgTiles) window.draw(s);
@@ -480,29 +490,17 @@ int main()
             for (auto& h : hazards) window.draw(h.shape);
             if (wallActive)
                 window.draw(giantWall);
-			window.draw(doorSprite);
+            window.draw(doorSprite);
             window.draw(player.shape);
             window.draw(player.hpBar);
             for (auto& e : enemies) if (e.alive) window.draw(e.shape);
             for (auto& b : player.bullets) if (b.active) window.draw(b.shape);
             for (auto& e : enemies)
                 for (auto& b : e.bullets) if (b.active) window.draw(b.shape);
-            sf::Font font;
-            font.loadFromFile("arial.ttf");
-            if (!menu.inMenu && !isGameOver && !inCredits) {
-                sf::Text potionText;
-                potionText.setFont(font);
-                std::string names[4] = { "Piwo", "Wodka", "Kubus", "Wino" };
-                potionText.setString(names[int(player.selectedAlcohol)] + ": " + std::to_string(player.alcoholInventory[player.selectedAlcohol]));
-                potionText.setCharacterSize(24);
-                potionText.setFillColor(sf::Color::White);
-                potionText.setPosition(10.f, 10.f);
-                window.draw(potionText);
-            }
         }
         window.display();
     }
 
-    for (auto* p : platforms) delete p; 
+    for (auto* p : platforms) delete p;
     return 0;
 }
