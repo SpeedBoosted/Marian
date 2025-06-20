@@ -1,10 +1,8 @@
 ﻿  apkatest.cpp
-  klasy.cpp
-  levels.cpp
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\apkatest.cpp(1,10): error C1083: Nie można otworzyć pliku dołącz: 'SFML/Graphics.hpp': No such file or directory
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.h(2,10): error C1083: Nie można otworzyć pliku dołącz: 'SFML/Graphics.hpp': No such file or directory
-  (kompilowanie pliku źródłowego „klasy.cpp”)
-  
-C:\Users\mikus\Desktop\projekt_oficial\Marian\apkatest\klasy.h(2,10): error C1083: Nie można otworzyć pliku dołącz: 'SFML/Graphics.hpp': No such file or directory
-  (kompilowanie pliku źródłowego „levels.cpp”)
-  
+C:\ProjektMarian\Marianaa\apkatest\apkatest.cpp(393,29): warning C4018: ">": niezgodność typu ze znakiem/bez znaku
+  Trwa generowanie kodu
+  43 of 835 functions ( 5.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    47 functions had inline decision re-evaluated but remain unchanged
+  Zakończono generowanie kodu
+  apkatest.vcxproj -> C:\ProjektMarian\Marianaa\x64\Release\apkatest.exe

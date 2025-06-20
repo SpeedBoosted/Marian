@@ -3,16 +3,16 @@
   "WorkspaceRootPath": "C:\\ProjektMarian\\Marianaa\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|C:\\ProjektMarian\\Marianaa\\apkatest\\apkatest.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|solutionrelative:apkatest\\apkatest.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|solutionrelative:apkatest\\klasy.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|solutionrelative:apkatest\\klasy.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|C:\\ProjektMarian\\Marianaa\\apkatest\\apkatest.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{6798F7B1-F208-4785-9A0F-F5D6846F9F1B}|apkatest\\apkatest.vcxproj|solutionrelative:apkatest\\apkatest.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -27,14 +27,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "klasy.h",
-              "DocumentMoniker": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.h",
-              "RelativeDocumentMoniker": "apkatest\\klasy.h",
-              "ToolTip": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.h",
-              "RelativeToolTip": "apkatest\\klasy.h",
-              "ViewState": "AgIAAIQAAAAAAAAAAAAAAJkAAAAdAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-01-17T13:52:37.103Z",
+              "Title": "klasy.cpp",
+              "DocumentMoniker": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.cpp",
+              "RelativeDocumentMoniker": "apkatest\\klasy.cpp",
+              "ToolTip": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.cpp",
+              "RelativeToolTip": "apkatest\\klasy.cpp",
+              "ViewState": "AgIAAFYAAAAAAAAAAAAswHUAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-17T13:52:41.048Z",
               "IsPinned": true,
               "EditorCaption": ""
             },
@@ -45,27 +45,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "klasy.cpp",
-              "DocumentMoniker": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.cpp",
-              "RelativeDocumentMoniker": "apkatest\\klasy.cpp",
-              "ToolTip": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.cpp",
-              "RelativeToolTip": "apkatest\\klasy.cpp",
-              "ViewState": "AgIAABcCAAAAAAAAAAAwwCICAABMAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-01-17T13:52:41.048Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": "apkatest.cpp",
               "DocumentMoniker": "C:\\ProjektMarian\\Marianaa\\apkatest\\apkatest.cpp",
               "RelativeDocumentMoniker": "apkatest\\apkatest.cpp",
               "ToolTip": "C:\\ProjektMarian\\Marianaa\\apkatest\\apkatest.cpp",
               "RelativeToolTip": "apkatest\\apkatest.cpp",
-              "ViewState": "AgIAAAMBAAAAAAAAAAAwwBsBAABPAAAAAAAAAA==",
+              "ViewState": "AgIAAAkCAAAAAAAAAAAswMQBAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-01-17T13:52:02.456Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "klasy.h",
+              "DocumentMoniker": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.h",
+              "RelativeDocumentMoniker": "apkatest\\klasy.h",
+              "ToolTip": "C:\\ProjektMarian\\Marianaa\\apkatest\\klasy.h",
+              "RelativeToolTip": "apkatest\\klasy.h",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAAAkAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-01-17T13:52:37.103Z",
               "EditorCaption": ""
             }
           ]

@@ -52,7 +52,7 @@ int main()
         std::cerr << "level2.wav missing\n";
     if (!level3Music.openFromFile("level3.wav"))
         std::cerr << "level3.wav missing\n";
-    if (!level3Music.openFromFile("level4.wav"))
+    if (!level4Music.openFromFile("level4.wav"))
         std::cerr << "level4.wav missing\n";
     menuMusic.setLoop(true);
     level1Music.setLoop(true);
