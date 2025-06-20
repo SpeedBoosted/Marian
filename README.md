@@ -16,3 +16,5 @@ Muzyka:
         "Spazzmatica Polka - Kevin MacLeod",
         "Nothings Gonna Stop Us Now - Greg O'Connor"
 gracz pije za pomocą g a wybiera napój opcjami 1,2,3,4
+plik exe znajduje się w x64/Debug
+Niestesy za nic hud dla potek nie chce się pokazać, ale działa
